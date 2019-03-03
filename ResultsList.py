@@ -28,14 +28,15 @@ class ResultsList:
     def saveResults(self, inputDataList):
         #Creating file to store results
         fw=open("Results.txt", "w")
-        line_new ="T"+"\t"+"Alpha_P"+"\t"+"Beta_T"+"\t"+"C_P"
+        line_new ="T"+"\t"+"Alpha_P"+"\t"+"Beta_T"+"\t"+"C_P"+"\t"+"K_S"
         fw.write(line_new+"\n")
         #Writing results in a file
         for i in range(0,len(self.resultList)):
             line_new =str(inputDataList[i].getT())+"\t"+str(self.resultList[i].getAlpha_P())+"+-"+\
             str(self.resultList[i].getAlphaError())+"\t"+str(self.resultList[i].getBeta_T())+"+-"+\
             str(self.resultList[i].getBetaError())+"\t"+str(self.resultList[i].getC_P())+"+-"+\
-            str(self.resultList[i].getCError())
+            str(self.resultList[i].getCError())+"\t"+str(self.resultList[i].getK_S())+"+-"+\
+            str(self.resultList[i].getKError())
             fw.write(line_new+"\n")
         fw.close()
 
@@ -73,6 +74,18 @@ class ResultsList:
             x.append(result.getT())
             y.append(result.getC_P())
             error.append(result.getCError())
+        errorbar(x,y,error,marker='o')
+        show()
+
+    #Method to plot the residual isentropic compressibility as a function of temperature
+    def plotK_S(self):
+        x=[]
+        y=[]
+        error=[]
+        for result in self.resultList:
+            x.append(result.getT())
+            y.append(result.getK_S())
+            error.append(result.getKError())
         errorbar(x,y,error,marker='o')
         show()
         

@@ -263,7 +263,7 @@ class LatticeHandler:
         fw.write(line_new+"\n")
         return [heatCap, stdDeviation]
 
-    def isentropicCompressibility(self, InputData, valuesForMean):
+    def isentropicCompressibility(self, inputData, meanSteps, valuesForMean):
         #Creating data arrays
         volumes=[]
         beta_t=[]
@@ -272,19 +272,87 @@ class LatticeHandler:
         #Data file corresponding to the needed parameters
         fileName="Measurements_T"+str(inputData.getT())
         #Retrieving data from the file
-        fr=open(filename, "r")
-        readLine=fr.readline()
+        fr=open(fileName, "r")
+        #Getting file lines
+        lines=fr.readlines()
+        #Line number, skipping two first lines
+        nLine=2
         #Reading all the measurements before the response functions
-        j=0 #Parameter to select volume data set
-        for k in range(int(inputData.getN()/valuesForMean):
+        for j in range(0, int(inputData.getN()/meanSteps/valuesForMean)):
             #Filling volume data set
             volumeSet=[]
-            for i in range(0, valuesForMean)
-                readline=fr.readLine()
-                values=readLine.split("\t")
-                volumesSet.append(float(values[0]))
+            for i in range(0, valuesForMean):
+                values=lines[nLine].split("\t")
+                #Introducing read volume (values[0]) in the data set
+                volumeSet.append(float(values[0]))
+                #Changing line
+                nLine+=1
+            #Introducing data set into data array
             volumes.append(volumeSet)
-            j+=1
+
+        #Skipping "Alpha_P" header line, not used
+        nLine+=1
+        #Reading alpha_p values, removing brackets from both ends of the line
+        lines[nLine]=lines[nLine].replace("[","")
+        lines[nLine]=lines[nLine].replace("]","")
+        #Spliting line into separate values
+        values=lines[nLine].split(",")
+        #Introducing values into data array of alpha_p
+        for i in range(0, len(values)):
+            alpha_p.append(float(values[i]))
+        nLine+=1
+
+        #Skipping "Beta_T" header line, not used
+        nLine+=1
+        #Reading beta_t values, removing brackets from both ends of the line
+        lines[nLine]=lines[nLine].replace("[","")
+        lines[nLine]=lines[nLine].replace("]","")
+        #Spliting line into separate values
+        values=lines[nLine].split(",")
+        #Introducing values into data array of alpha_p
+        for i in range(0, len(values)):
+            beta_t.append(float(values[i]))
+        nLine+=1
+
+        #Skippimg "C_P" header line, not used
+        nLine+=1
+        #Reading c_p values, removing brackets from both ends of the line
+        lines[nLine]=lines[nLine].replace("[","")
+        lines[nLine]=lines[nLine].replace("]","")
+        #Spliting line into separate values
+        values=lines[nLine].split(",")
+        #Introducing values into data array of alpha_p
+        for i in range(0, len(values)):
+            c_p.append(float(values[i]))
+        #Closing file
+        fr.close()
+
+        #Calculating mean values
+        meanVolumes=[]
+        #Introducing mean volume of each set into array
+        for volumeSet in volumes:
+            meanVolumes.append(sum(volumeSet)/len(volumeSet))
+        
+        #Array to store values of Ks
+        isentCompressArray=[]
+        #Calculating values of the isentropic compressibility
+        for i in range(0, len(meanVolumes)):
+            isentCompress=beta_t[i]-inputData.getT()*meanVolumes[i]*math.pow(alpha_p[i],2)/c_p[i]
+            isentCompressArray.append(isentCompress)
+        isentropicCompressibility=sum(isentCompressArray)/len(isentCompressArray)
+        #Calculating deviation
+        residue=0
+        for i in range(0,len(isentCompressArray)):
+            residue=residue+math.pow((isentCompressArray[i]-isentropicCompressibility),2)
+        stdDeviation=math.sqrt(residue/(len(isentCompressArray)-1))
+        #Writting results in file (multiple values not mean value)
+        fileName="Measurements_T"+str(inputData.getT())
+        fw=open(fileName, "a")
+        line_new ="K_s"+"\n"+str(isentCompressArray)
+        fw.write(line_new+"\n")
+        return [isentropicCompressibility, stdDeviation]
+
+        
 
         
 

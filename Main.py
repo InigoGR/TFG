@@ -40,8 +40,9 @@ for T in range(100, 300+tempIncrement, tempIncrement):
     alpha_p=LatticeHandler().thermalExpansivity(measurements[0], measurements[2], inputdata[j], 100)
     beta_t=LatticeHandler().isothermalCompressibility(measurements[0], inputdata[j], 100)
     c_p=LatticeHandler().heatCapacity(measurements[0], measurements[1], measurements[2], inputdata[j], 100)
+    k_s=LatticeHandler().isentropicCompressibility(inputdata[j],1000, 100)
     #Adding results to list
-    resultList.addResult(Result(inputdata[j].getT(), alpha_p, beta_t, c_p))
+    resultList.addResult(Result(inputdata[j].getT(), alpha_p, beta_t, c_p, k_s))
     #Next iteration
     j+=1
 #Saving results in Results.txt file using the list of inputdatas
@@ -50,4 +51,4 @@ resultList.saveResults(inputdata)
 resultList.plotAlpha_P()
 resultList.plotBeta_T()
 resultList.plotC_P()
-
+resultList.plotK_S()

@@ -11,7 +11,7 @@
 class Result:
     #Class constructor, stores results and their standard deviation. Alpha_P and the other
     #parameters are expected to be arrays [result, stdDeviation]
-    def __init__(self, temp, alpha_p, beta_t, c_p):
+    def __init__(self, temp, alpha_p, beta_t, c_p, k_s):
         self.temperature=temp
         #Assigning result
         self.alpha_p=alpha_p[0]
@@ -21,6 +21,8 @@ class Result:
         self.betaDev=beta_t[1]
         self.c_p=c_p[0]
         self.cDev=c_p[1]
+        self.k_s=k_s[0]
+        self.kDev=k_s[1]
     
     #Return methods
     def getT(self):
@@ -43,5 +45,11 @@ class Result:
 
     def getCError(self):
         return self.cDev
+
+    def getK_S(self):
+        return self.k_s
+
+    def getKError(self):
+        return self.kDev
 
 
