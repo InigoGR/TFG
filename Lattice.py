@@ -20,7 +20,8 @@ class Lattice:
     volume=0
     energy=0
     neighbor=0
-    probArray=[0, 0, 0, 0, 0, 0, 0]
+    probArrayPlus=[0, 0, 0, 0, 0, 0, 0]
+    probArrayMinus=[0, 0, 0, 0, 0, 0, 0]
     #Constructor
     def __init__(self, inputData):
         #Creating random lattice
@@ -84,7 +85,7 @@ class Lattice:
 
         #Calculating intermolecular energy
         energy=0
-        #Loop to get the intermolecular energy
+        #Loop to get the initial intermolecular energy
         for x in range(0, inputData.getL()):
             for y in range(0, inputData.getL()):
                 for z in range(0, inputData.getL()):
@@ -98,22 +99,28 @@ class Lattice:
                             bigVol=bigVol+self.lattice[neighborCoord[0], neighborCoord[1],\
                                  neighborCoord[2]]
                         #Calculating the intermolecular energy of neighbors
-                        energy=energy+(bigVol*inputData.getEb()+(6-bigVol*inputData.getEs()))
+                        energy=energy+(bigVol*inputData.getEb()+(6-bigVol)*inputData.getEs())
         self.energy=energy/2
-        
         #Volume difference in 1 cell
         vChange=inputData.getVb()-inputData.getVs()
         #Energy difference in 1 volume change
         eChange=inputData.getEb()-inputData.getEs()
-        #Probabilities for energy change
-        self.probArray[0]=1
-        self.probArray[1]=math.exp(-((eChange-inputData.getP()*vChange)/Constant().K()/inputData.getT()))
-        self.probArray[2]=math.exp(-2*((eChange-inputData.getP()*vChange)/Constant().K()/inputData.getT()))
-        self.probArray[3]=math.exp(-3*((eChange-inputData.getP()*vChange)/Constant().K()/inputData.getT()))
-        self.probArray[4]=math.exp(-4*((eChange-inputData.getP()*vChange)/Constant().K()/inputData.getT()))
-        self.probArray[5]=math.exp(-5*((eChange-inputData.getP()*vChange)/Constant().K()/inputData.getT()))
-        self.probArray[6]=math.exp(-6*((eChange-inputData.getP()*vChange)/Constant().K()/inputData.getT()))
-
+        #Probabilities for energy change from V+ to V-
+        self.probArrayPlus[0]=1
+        self.probArrayPlus[1]=inputData.getLambda()*math.exp(-((eChange+inputData.getP()*vChange)/Constant().K()/inputData.getT()))
+        self.probArrayPlus[2]=math.pow(inputData.getLambda(),2)*math.exp(-2*((eChange+inputData.getP()*vChange)/Constant().K()/inputData.getT()))
+        self.probArrayPlus[3]=math.pow(inputData.getLambda(),3)*math.exp(-3*((eChange+inputData.getP()*vChange)/Constant().K()/inputData.getT()))
+        self.probArrayPlus[4]=math.pow(inputData.getLambda(),4)*math.exp(-4*((eChange+inputData.getP()*vChange)/Constant().K()/inputData.getT()))
+        self.probArrayPlus[5]=math.pow(inputData.getLambda(),5)*math.exp(-5*((eChange+inputData.getP()*vChange)/Constant().K()/inputData.getT()))
+        self.probArrayPlus[6]=math.pow(inputData.getLambda(),6)*math.exp(-6*((eChange+inputData.getP()*vChange)/Constant().K()/inputData.getT()))
+        #Probabilities for energy change from V- to V+
+        self.probArrayMinus[0]=1
+        self.probArrayMinus[1]=inputData.getLambda()*math.exp(((eChange+inputData.getP()*vChange)/Constant().K()/inputData.getT()))
+        self.probArrayMinus[2]=math.pow(inputData.getLambda(),2)*math.exp(2*((eChange+inputData.getP()*vChange)/Constant().K()/inputData.getT()))
+        self.probArrayMinus[3]=math.pow(inputData.getLambda(),3)*math.exp(3*((eChange+inputData.getP()*vChange)/Constant().K()/inputData.getT()))
+        self.probArrayMinus[4]=math.pow(inputData.getLambda(),4)*math.exp(4*((eChange+inputData.getP()*vChange)/Constant().K()/inputData.getT()))
+        self.probArrayMinus[5]=math.pow(inputData.getLambda(),5)*math.exp(5*((eChange+inputData.getP()*vChange)/Constant().K()/inputData.getT()))
+        self.probArrayMinus[6]=math.pow(inputData.getLambda(),6)*math.exp(6*((eChange+inputData.getP()*vChange)/Constant().K()/inputData.getT()))
     #Method to change the volume of a cell
     def changeCellVolume(self, x, y, z):
         self.lattice[x,y,z]=1-self.lattice[x,y,z]

@@ -9,7 +9,7 @@
 #will be stored
 
 from Result import *
-from matplotlib.pyplot import show, errorbar
+import matplotlib.pyplot as plt
 
 class ResultsList:
     #Class constructor, creates list to store results
@@ -25,14 +25,18 @@ class ResultsList:
         self.resultList.append(result)
 
     #Class to save results in a file, needs the list of all the inputDatas used
-    def saveResults(self, inputDataList):
+    def saveResults(self, iniT, finT, tempIncrement):
         #Creating file to store results
         fw=open("Results.txt", "w")
         line_new ="T"+"\t"+"Alpha_P"+"\t"+"Beta_T"+"\t"+"C_P"+"\t"+"K_S"
         fw.write(line_new+"\n")
+        #Creating temperature array
+        temperatures=[]
+        for T in range(iniT, finT+tempIncrement, tempIncrement):
+            temperatures.append(T)
         #Writing results in a file
         for i in range(0,len(self.resultList)):
-            line_new =str(inputDataList[i].getT())+"\t"+str(self.resultList[i].getAlpha_P())+"+-"+\
+            line_new =str(temperatures[i])+"\t"+str(self.resultList[i].getAlpha_P())+"+-"+\
             str(self.resultList[i].getAlphaError())+"\t"+str(self.resultList[i].getBeta_T())+"+-"+\
             str(self.resultList[i].getBetaError())+"\t"+str(self.resultList[i].getC_P())+"+-"+\
             str(self.resultList[i].getCError())+"\t"+str(self.resultList[i].getK_S())+"+-"+\
@@ -50,8 +54,9 @@ class ResultsList:
             x.append(result.getT())
             y.append(result.getAlpha_P())
             error.append(result.getAlphaError())
-        errorbar(x,y,error,marker='o')
-        show()
+        plt.errorbar(x,y,error,marker='o')
+        plt.title(r'$\alpha_P$', fontsize=14)
+        plt.show()
 
     #Method to plot the isothermal compressibility as a function of temperature
     def plotBeta_T(self):
@@ -62,8 +67,9 @@ class ResultsList:
             x.append(result.getT())
             y.append(result.getBeta_T())
             error.append(result.getBetaError())
-        errorbar(x,y,error,marker='o')
-        show()
+        plt.errorbar(x,y,error,marker='o')
+        plt.title(r'$\beta_T$', fontsize=14)
+        plt.show()
     
     #Method to plot the residual heat capacity as a function of temperature
     def plotC_P(self):
@@ -74,8 +80,9 @@ class ResultsList:
             x.append(result.getT())
             y.append(result.getC_P())
             error.append(result.getCError())
-        errorbar(x,y,error,marker='o')
-        show()
+        plt.errorbar(x,y,error,marker='o')
+        plt.title("$C_p$", fontsize=14)
+        plt.show()
 
     #Method to plot the residual isentropic compressibility as a function of temperature
     def plotK_S(self):
@@ -86,8 +93,9 @@ class ResultsList:
             x.append(result.getT())
             y.append(result.getK_S())
             error.append(result.getKError())
-        errorbar(x,y,error,marker='o')
-        show()
+        plt.errorbar(x,y,error,marker='o')
+        plt.title("$K_s$", fontsize=14)
+        plt.show()
         
     
 

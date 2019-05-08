@@ -10,10 +10,10 @@ Created on 17 dic. 2018
 
 class InputData:
     #Input object constructor with some default values
-    #Parameters: lattice size, temperature, montecarlo steps, equlibrium steps, big volume
-    #            small volume, big energy, small energy, pressure
+    #Parameters: lattice size, temperature, montecarlo steps, equlibrium steps, big cell volume
+    #            small cell volume, big free volume, small free volume, big energy, small energy, pressure
     def __init__( self, l=4, t=200, n=1000000, nEquil=1000,
-                  vb=2, vs=1, eb=2, es=1, p=1 ) :
+                  vb=2, vs=1, fbv=1, fsv=0.2, eb=1, es=2, p=1 ) :
         self.length=l
         self.temperature=t
         self.steps=n
@@ -23,6 +23,10 @@ class InputData:
         self.bigEnergy=eb
         self.smallEnergy=es
         self.pressure=p
+        self.freeBVolume=fbv
+        self.freeSVolume=fsv
+        self.freeLambda=fbv/fsv
+
     
     #Operations to get the data for the simulation
     def getT(self):
@@ -51,3 +55,12 @@ class InputData:
     
     def getP(self):
         return self.pressure
+
+    def getFbv(self):
+        return self.freeBVolume
+
+    def getFsv(self):
+        return self.freeSVolume
+
+    def getLambda(self):
+        return self.freeLambda
