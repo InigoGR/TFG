@@ -13,6 +13,7 @@ Created on 20 dic. 2018
 from InputData import *
 from Lattice import *
 from Constant import *
+from Numericalmethods import *
 import numpy as np
 import random
 import math
@@ -87,7 +88,7 @@ class LatticeHandler:
         line_new="Equilibrium steps="+str(inputData.getEq())
         fw.write(line_new+"\n")
         #Writting big cell volume
-        line_new="Big cell volume="+str(inputData.getEb())
+        line_new="Big cell volume="+str(inputData.getVb())
         fw.write(line_new+"\n")
         #Writting small cell volume
         line_new="Small cell volume="+str(inputData.getVs())
@@ -118,6 +119,7 @@ class LatticeHandler:
         energyValues=[]
         enthalpyValues=[]
         #The lattice state is stored every meanSteps steps
+        counter=1
         for i in range(0, int(inputData.getN()/meanSteps)):
             vol=0
             energy=0
@@ -136,6 +138,9 @@ class LatticeHandler:
             #Saving parameters in the measurements file
             line_new=str(vol)+"\t"+str(energy)+"\t"+str(enthalpy)
             fw.write(line_new+"\n")
+            if counter/inputData.getN()/meanSteps%0.01==0:
+                print(counter/int(inputData.getN()/meanSteps))
+            counter+=1
         fw.close()
         return [volumeValues, energyValues, enthalpyValues]
     
@@ -463,8 +468,10 @@ class LatticeHandler:
         fw.write(line_new+"\n")
         return [isentropicCompressibility, stdDeviation]
 
+    
+
     #Class that shows the evolution of the volume for a given temperature using the corresponding
-    #data file 'Measurements_Tx'. It uses 
+    #data file 'Measurements_Tx'. It needs the number of values for the mean
     def volEvo(self, T, valuesForMean):
         #Creating data arrays
         volumes=[]
@@ -475,23 +482,29 @@ class LatticeHandler:
         #Getting file lines
         lines=fr.readlines()
         #Reading inputData parameters
+        line=lines[0].split("=")
+        l=float(line[1])
         line=lines[2].split("=")
         n=float(line[1])
-        line=lines[5].split("=")
+        line=lines[4].split("=")
         vb=float(line[1])
-        line=lines[6].split("=")
+        line=lines[5].split("=")
         vs=float(line[1])
+        line=lines[6].split("=")
+        fvb=float(line[1])
         line=lines[7].split("=")
-        fbv=float(line[1])
+        fvs=float(line[1])
         line=lines[8].split("=")
-        fsv=float(line[1])
-        line=lines[9].split("=")
         eb=float(line[1])
-        line=lines[10].split("=")
+        line=lines[9].split("=")
         es=float(line[1])
+        line=lines[10].split("=")
+        p=float(line[1])
         line=lines[11].split("=")
         meanSteps=float(line[1])
-
+        lambdaVol=fvb/fvs
+        deltaV=vb-vs
+        deltaE=es-eb
         #Number of data sets
         nDataSets=int(n/meanSteps/valuesForMean)
         #Reading all the measurements before the response functions
@@ -507,7 +520,6 @@ class LatticeHandler:
                 nLine+=1
             #Introducing data set into data array
             volumes.append(volumeSet)
-
         #Plotting mean values of the volume sets
         x=[]
         y=[]
@@ -530,13 +542,25 @@ class LatticeHandler:
             stdDeviation=math.sqrt(residue/(nDataSets-1))
             error.append(stdDeviation)
             k+=1
-
+        
         #Calculating value given by mean-field approximation
         
+        #Function to calculate the volume given by the mean field theory
+        def fun(v):
+            return Constant().K()/deltaV*math.log(lambdaVol*(vb-v)/(v-vs))-(p-6*deltaE/deltaV*(v-vs)/deltaV)/T
 
-        plt.errorbar(x,y,error,marker='o')
+        volumeUnitCell=Numericalmethods().newton(fun, 1.1*vs, 10e-9, 10e-32)
+        meanFieldVolume=volumeUnitCell*math.pow(l,3)
+
+        x2=x
+        y2=[]
+        for o in range(0, nDataSets):
+            y2.append(meanFieldVolume) 
+        plt.plot(x,y,x2,y2,linewidth=2.0)
         plt.title("Volume", fontsize=14)
-        plt.show()
+        plt.xscale('log')
+        plt.show()              
+       
         
 
 
