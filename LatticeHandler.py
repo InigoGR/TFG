@@ -7,8 +7,7 @@ Created on 20 dic. 2018
 '''
 
 #LatticeCounter.py
-#It allows to perform various operations with the lattice, getting
-#the total volume, the number of cells with V+ or V- 
+#Class responsible for the operations on the lattice simulation as well as theoretical calculations 
 
 from InputData import *
 from Lattice import *
@@ -120,7 +119,12 @@ class LatticeHandler:
         enthalpyValues=[]
         #The lattice state is stored every meanSteps steps
         counter=1
-        for i in range(0, int(inputData.getN()/meanSteps)):
+        #Number of volumes to be registered
+        nVols=int(inputData.getN()/meanSteps)
+
+        print("Taking measurements")
+
+        for i in range(0, nVols):
             vol=0
             energy=0
             enthalpy=0
@@ -138,9 +142,11 @@ class LatticeHandler:
             #Saving parameters in the measurements file
             line_new=str(vol)+"\t"+str(energy)+"\t"+str(enthalpy)
             fw.write(line_new+"\n")
-            if counter/inputData.getN()/meanSteps%0.01==0:
-                print(counter/int(inputData.getN()/meanSteps))
+            #Simulation progress indicator
+            if math.fmod(counter/nVols*100,1.0)==0:
+                print(str(counter/(nVols)*100)+"%")
             counter+=1
+
         fw.close()
         return [volumeValues, energyValues, enthalpyValues]
     
@@ -547,7 +553,8 @@ class LatticeHandler:
         
         #Function to calculate the volume given by the mean field theory
         def fun(v):
-            return Constant().K()/deltaV*math.log(lambdaVol*(vb-v)/(v-vs))-(p-6*deltaE/deltaV*(v-vs)/deltaV)/T
+            return Constant().K()/deltaV*math.log(lambdaVol*(vb-v)/(v-vs))-(p-6*deltaE/deltaV*\
+                (v-vs)/deltaV)/T
 
         volumeUnitCell=Numericalmethods().newton(fun, 1.1*vs, 10e-9, 10e-32)
         meanFieldVolume=volumeUnitCell*math.pow(l,3)
@@ -561,7 +568,135 @@ class LatticeHandler:
         plt.xscale('log')
         plt.show()              
        
+    #Class that shows the evolution of the volume as the temperature increases
+    def volEvoTemps(self, iniT, finT, tempIncrement):
+        Volumes=[]
+        temps=[]
+        for T in range(iniT, finT+tempIncrement, tempIncrement):
+            temps.append(T)
+            #Data file corresponding to the needed parameters
+            fileName="Measurements_T"+str(T)
+            #Retrieving data from the file
+            fr=open(fileName, "r")
+            #Getting file lines
+            lines=fr.readlines()
+            #Reading inputData parameters
+            line=lines[0].split("=")
+            l=float(line[1])
+            line=lines[2].split("=")
+            n=float(line[1])
+            line=lines[4].split("=")
+            vb=float(line[1])
+            line=lines[5].split("=")
+            vs=float(line[1])
+            line=lines[6].split("=")
+            fvb=float(line[1])
+            line=lines[7].split("=")
+            fvs=float(line[1])
+            line=lines[8].split("=")
+            eb=float(line[1])
+            line=lines[9].split("=")
+            es=float(line[1])
+            line=lines[10].split("=")
+            p=float(line[1])
+            line=lines[11].split("=")
+            meanSteps=float(line[1])
+            lambdaVol=fvb/fvs
+            deltaV=vb-vs
+            deltaE=es-eb
+            #Number of measurements
+            nMeasurements=int(n/meanSteps)
+            #Reading all the measurements before the response functions
+            nLine=13
+            for j in range(0, nMeasurements):
+                volumeSet=[]
+                values=lines[nLine].split("\t")
+                #Introducing read volume (values[0]) in the data set
+                volumeSet.append(float(values[0]))
+                #Changing line
+                nLine+=1
+                #Introducing data set into data array
+            Volumes.append(statistics.mean(volumeSet))
+
+        #Calculating theoretical values
+        VTheory=[]
+        TTheory=[]
+        for T in range(iniT, finT):
+            #Function to calculate the volume given by the mean field theory
+            def fun(v):
+                return Constant().K()/deltaV*math.log(lambdaVol*(vb-v)/(v-vs))-(p-6*deltaE/deltaV*\
+                    (v-vs)/deltaV)/T
+            #Calculating volume of the cell using Newton's method
+            volumeUnitCell=Numericalmethods().newton(fun, 1.1*vs, 10e-7, 10e-32)
+            meanFieldVolume=volumeUnitCell*math.pow(l,3)
+            VTheory.append(meanFieldVolume)
+            TTheory.append(T)
+
+        #Plotting results
+        plt.plot(temps,Volumes,TTheory,VTheory,linewidth=2.0)
+        plt.title("Volume", fontsize=14)
+        plt.show()    
         
+    #Method for calculating theoretically the isothermal compressibility
+    def isothermalCompressibilityTheory(self, p, iniT=200, finT=300, v0=3.321155762e-29,
+        deltaV=8.30288941e-30, deltaE=1.660577881e-21, lambdaVol=0.2):
+        
+        #Calculating 1/V*(dv/dT) at cte pressure for all temperatures
+        Kt=[]
+        TArray=[]
+        for T in range(iniT, finT):
+            #Function to calculate the volume given by the mean field theory for a given temperature
+            def volumeForP(p):
+                def fun(v):
+                    return Constant().K()/deltaV*math.log(lambdaVol*(v0+deltaV-v)/(v-v0))-(p-6*\
+                        deltaE/deltaV*(v-v0)/deltaV)/T
+
+                volumeUnitCell=Numericalmethods().newton(fun, 1.1*v0, 10e-9, 10e-34)
+                return volumeUnitCell
+            #Volume for the established pressure
+            v=volumeForP(p)
+            #Value of the derivative
+            derivative=Numericalmethods().df(volumeForP, p, 1)
+            #Calculation of the response function
+            KtTemp=-derivative/v
+            Kt.append(KtTemp)
+            TArray.append(T)
+
+        #Plotting results
+        plt.plot(TArray, Kt,linewidth=2.0)
+        plt.title(r'$\beta_T$', fontsize=14)
+        plt.show()  
+    
+    #Method for calculating theoretically the thermal expansivity
+    def thermalExpansivityTheory(self, p, iniT=200, finT=300, v0=3.321155762e-29,
+        deltaV=8.30288941e-30, deltaE=1.660577881e-21, lambdaVol=0.2):
+        #Function to calculate the volume given by the mean field theory for a given temperature
+        def volumeForT(T):
+            def fun(v):
+                return Constant().K()/deltaV*math.log(lambdaVol*(v0+deltaV-v)/(v-v0))-(p-6*\
+                    deltaE/deltaV*(v-v0)/deltaV)/T
+
+            volumeUnitCell=Numericalmethods().newton(fun, 1.1*v0, 10e-9, 10e-34)
+            return volumeUnitCell
+        
+        #Calculating 1/V*(dv/dT) at cte pressure for all temperatures
+        alpha=[]
+        TArray=[]
+        for T in range(iniT, finT):
+            v=volumeForT(T)
+            derivative=Numericalmethods().df(volumeForT, T, 1)
+            alphaTemp=derivative/v
+            alpha.append(alphaTemp)
+            TArray.append(T)
+
+        #Plotting results
+        plt.plot(TArray, alpha,linewidth=2.0)
+        plt.title(r'$\alpha_P$', fontsize=14)
+        plt.show()  
+
+
+        
+            
 
 
          
