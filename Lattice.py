@@ -22,6 +22,8 @@ class Lattice:
     neighbor=0
     probArrayPlus=[0, 0, 0, 0, 0, 0, 0]
     probArrayMinus=[0, 0, 0, 0, 0, 0, 0]
+    nVPlus=0
+    nVMinus=0
     #Constructor
     def __init__(self, inputData):
         #Creating random lattice
@@ -34,16 +36,14 @@ class Lattice:
                     self.lattice[x,y,z]=random.randint(0,1)
 
         #Calculating total volume
-        nVPlus=0
-        nVMinus=0
         for column in self.lattice:
             for row in column:
                 for cell in row:
                     if cell==1:
-                        nVPlus+=1
+                        self.nVPlus+=1
                     else:
-                        nVMinus+=1
-        self.volume=nVMinus*inputData.getVs()+nVPlus*inputData.getVb()
+                        self.nVMinus+=1
+        self.volume=self.nVMinus*inputData.getVs()+self.nVPlus*inputData.getVb()
 
         #Getting neighbor lattice
         self.neighbor=np.zeros((inputData.getL(),inputData.getL(),inputData.getL(),6,3),\
@@ -130,6 +130,14 @@ class Lattice:
     #Method to change the volume
     def changeVolume(self, newVolume):
         self.volume=newVolume
+    #Method to register the transition of a minus cell to a plus cell
+    def changeMinusToPlus(self):
+        self.nVMinus-=1
+        self.nVPlus+=1
+    #Method to register the transition of a plus cell to a minus cell
+    def changePlusToMinus(self):
+        self.nVMinus+=1
+        self.nVPlus-=1
 
     #Method to return the lattice
     def getLattice(self):
@@ -143,3 +151,9 @@ class Lattice:
     #Method to get the energy
     def getEnergy(self):
         return self.energy
+    #Method to get the number of big cells
+    def getNVPlus(self):
+        return self.nVPlus
+    #Method to get the number of small cells
+    def getNVMinus(self):
+        return self.nVMinus

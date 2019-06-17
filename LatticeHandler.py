@@ -39,7 +39,7 @@ class LatticeHandler:
         #Getting intermolecular energy change
         #Case initialV=V-
         if tempLattice[x,y,z]==0:
-            if random.uniform(0,1)<lattice.probArrayMinus[n]:
+            if random.uniform(0,1)<(lattice.getNVMinus()/(lattice.getNVPlus()+1)*lattice.probArrayMinus[n]):
             
                 intEnergyVar=n*(inputData.getEb()-inputData.getEs())
                 volumeChange=inputData.getVb()-inputData.getVs()
@@ -49,19 +49,23 @@ class LatticeHandler:
                 lattice.changeCellVolume(x,y,z)
                 #Changing energy
                 lattice.changeEnergy(energy+intEnergyVar)
+                #Changing cell type counter
+                lattice.changeMinusToPlus()
 
         #Case initialV=V+
         else:
             intEnergyVar=n*(inputData.getEs()-inputData.getEb())
             volumeChange=inputData.getVs()-inputData.getVb()      
         #Checking if the change is accepted
-            if random.uniform(0,1)<lattice.probArrayPlus[n]:
+            if random.uniform(0,1)<(lattice.getNVPlus()/(lattice.getNVMinus()+1)*lattice.probArrayPlus[n]):
                 #Changing volume
                 lattice.changeVolume(lattice.getVolume()+volumeChange)
                 #Changing cell volume
                 lattice.changeCellVolume(x,y,z)
                 #Changing energy
                 lattice.changeEnergy(energy+intEnergyVar)
+                #Changing cell type counter
+                lattice.changePlusToMinus()
     
     #Method to get the volume, enthalpy and intermolecular energy in intervals separated
     #by the indicated amount of steps with a total of MonteCarlo steps indicated by the inputData.
@@ -288,7 +292,7 @@ class LatticeHandler:
         return [isothCompress, stdDeviation]
         
 
-    #Method to calculate the residual heat capacity for a given temperature from the data files generated
+    #Method to calculate the heat capacity for a given temperature from the data files generated
     #in a previous similation and the amount of values that have to be used for 
     #the mean. Returns an array with the mean value and the standard deviation.
     def heatCapacity(self, T, valuesForMean):
@@ -355,10 +359,12 @@ class LatticeHandler:
             meanEnthalpy=sum(enthalpySets[i])/valuesForMean
             meanProductE=sum(productE[i])/valuesForMean
             meanProductV=sum(productV[i])/valuesForMean
-
-            heatCapArray.append(1/Constant().K()/math.pow(T,2)*(meanProductE-\
+            #Residual heat capacity
+            resHeatCap=1/Constant().K()/math.pow(T,2)*(meanProductE-\
             meanEnergy*meanEnthalpy)+1/Constant().K()/math.pow(T,2)*(meanProductV-\
-            meanVolume*meanEnthalpy)-math.pow(l,3)*Constant().K())
+            meanVolume*meanEnthalpy)-math.pow(l,3)*Constant().K()
+
+            heatCapArray.append(resHeatCap+5/2*math.pow(l,3)*Constant().K())
         heatCap=sum(heatCapArray)/nDataSets
         #Calculating deviation
         residue=0
@@ -476,7 +482,7 @@ class LatticeHandler:
 
     
 
-    #Class that shows the evolution of the volume for a given temperature using the corresponding
+    #Method that shows the evolution of the volume for a given temperature using the corresponding
     #data file 'Measurements_Tx'. It needs the number of values for the mean
     def volEvo(self, T, valuesForMean):
         #Creating data arrays
@@ -568,7 +574,7 @@ class LatticeHandler:
         plt.xscale('log')
         plt.show()              
        
-    #Class that shows the evolution of the volume as the temperature increases
+    #Method that shows the evolution of the volume as the temperature increases
     def volEvoTemps(self, iniT, finT, tempIncrement):
         Volumes=[]
         temps=[]
