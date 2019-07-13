@@ -639,10 +639,175 @@ class LatticeHandler:
             TTheory.append(T)
 
         #Plotting results
-        plt.plot(temps,Volumes,TTheory,VTheory,linewidth=2.0)
+        plt.plot(temps,Volumes,TTheory, VTheory, linewidth=2.0)
         plt.title("Volume", fontsize=14)
         plt.show()    
+    
+    #Method that shows the evolution of the energy for a given temperature using the corresponding
+    #data file 'Measurements_Tx'. It needs the number of values for the mean
+    def energyEvo(self, T, valuesForMean):
+        #Creating data arrays
+        energies=[]
+        #Data file corresponding to the needed parameters
+        fileName="Measurements_T"+str(T)
+        #Retrieving data from the file
+        fr=open(fileName, "r")
+        #Getting file lines
+        lines=fr.readlines()
+        #Reading inputData parameters
+        line=lines[0].split("=")
+        l=float(line[1])
+        line=lines[2].split("=")
+        n=float(line[1])
+        line=lines[4].split("=")
+        vb=float(line[1])
+        line=lines[5].split("=")
+        vs=float(line[1])
+        line=lines[6].split("=")
+        fvb=float(line[1])
+        line=lines[7].split("=")
+        fvs=float(line[1])
+        line=lines[8].split("=")
+        eb=float(line[1])
+        line=lines[9].split("=")
+        es=float(line[1])
+        line=lines[10].split("=")
+        p=float(line[1])
+        line=lines[11].split("=")
+        meanSteps=float(line[1])
+        lambdaVol=fvb/fvs
+        deltaV=vb-vs
+        deltaE=es-eb
+        #Number of data sets
+        nDataSets=int(n/meanSteps/valuesForMean)
+        #Reading all the measurements before the response functions
+        nLine=13
+        for j in range(0, nDataSets):
+            #Filling energy data set
+            energySet=[]
+            for i in range(0, valuesForMean):
+                values=lines[nLine].split("\t")
+                #Introducing read energy (values[1]) in the data set
+                energySet.append(float(values[1]))
+                #Changing line
+                nLine+=1
+            #Introducing data set into data array
+            energies.append(energySet)
+        #Plotting mean values of the energy sets
+        x=[]
+        y=[]
+        error=[]
+
+        #Calculating deviation to get error of every energy
+        #k counter
+        k=0
+        for dataSet in energies:
+            #Initial residue 
+            residue=0
+            #Calculating mean
+            meanEnergy=statistics.mean(dataSet)
+            #Adding mean to data array
+            y.append(meanEnergy)
+            x.append(k)
+            #Calculating standard deviation of every data set
+            for value in dataSet:
+                residue=residue+math.pow((value-meanEnergy),2)
+            stdDeviation=math.sqrt(residue/(nDataSets-1))
+            error.append(stdDeviation)
+            k+=1
         
+        #Calculating value given by mean-field approximation
+        
+        #Function to calculate the volume given by the mean field theory
+        def fun(v):
+            return Constant().K()/deltaV*math.log(lambdaVol*(vb-v)/(v-vs))-(p-6*deltaE/deltaV*\
+                (v-vs)/deltaV)/T
+
+        volumeUnitCell=Numericalmethods().newton(fun, 1.05*vs, 10e-9, 10e-32)
+        energyUnitCell=-3*deltaE*math.pow((volumeUnitCell-vs)/deltaV,2)
+        meanFieldEnergy=energyUnitCell*math.pow(l,3)
+        
+
+
+        x2=x
+        y2=[]
+        for o in range(0, nDataSets):
+            y2.append(meanFieldEnergy) 
+        plt.plot(x,y,x2,y2,linewidth=2.0)
+        plt.title("Energy", fontsize=14)
+        plt.xscale('log')
+        plt.show()
+
+    #Method that shows the evolution of the energy as the temperature increases
+    def energyEvoTemps(self, iniT, finT, tempIncrement):
+        Energies=[]
+        temps=[]
+        for T in range(iniT, finT+tempIncrement, tempIncrement):
+            temps.append(T)
+            #Data file corresponding to the needed parameters
+            fileName="Measurements_T"+str(T)
+            #Retrieving data from the file
+            fr=open(fileName, "r")
+            #Getting file lines
+            lines=fr.readlines()
+            #Reading inputData parameters
+            line=lines[0].split("=")
+            l=float(line[1])
+            line=lines[2].split("=")
+            n=float(line[1])
+            line=lines[4].split("=")
+            vb=float(line[1])
+            line=lines[5].split("=")
+            vs=float(line[1])
+            line=lines[6].split("=")
+            fvb=float(line[1])
+            line=lines[7].split("=")
+            fvs=float(line[1])
+            line=lines[8].split("=")
+            eb=float(line[1])
+            line=lines[9].split("=")
+            es=float(line[1])
+            line=lines[10].split("=")
+            p=float(line[1])
+            line=lines[11].split("=")
+            meanSteps=float(line[1])
+            lambdaVol=fvb/fvs
+            deltaV=vb-vs
+            deltaE=es-eb
+            #Number of measurements
+            nMeasurements=int(n/meanSteps)
+            #Reading all the measurements before the response functions
+            nLine=13
+            for j in range(0, nMeasurements):
+                energySet=[]
+                values=lines[nLine].split("\t")
+                #Introducing read energy (values[1]) in the data set
+                energySet.append(float(values[1]))
+                #Changing line
+                nLine+=1
+                #Introducing data set into data array
+            Energies.append(statistics.mean(energySet))
+
+        #Calculating theoretical values
+        ETheory=[]
+        TTheory=[]
+        for T in range(iniT, finT):
+            #Function to calculate the volume given by the mean field theory
+            def fun(v):
+                return Constant().K()/deltaV*math.log(lambdaVol*(vb-v)/(v-vs))-(p-6*deltaE/deltaV*\
+                    (v-vs)/deltaV)/T
+            #Calculating energy of the cell using Newton's method
+            volumeUnitCell=Numericalmethods().newton(fun, 1.05*vs, 10e-7, 10e-32)
+            energyUnitCell=-3*deltaE*math.pow((volumeUnitCell-vs)/deltaV,2)
+            meanFieldEnergy=energyUnitCell*math.pow(l,3)
+            ETheory.append(meanFieldEnergy)
+            TTheory.append(T)
+
+        #Plotting results
+        plt.plot(temps,Energies,TTheory,ETheory,linewidth=2.0)
+        plt.title("Volume", fontsize=14)
+        plt.show()
+
     #Method for calculating theoretically the isothermal compressibility
     def isothermalCompressibilityTheory(self, p, iniT=200, finT=300, v0=3.321155762e-29,
         deltaV=8.30288941e-30, deltaE=1.660577881e-21, lambdaVol=0.2):
