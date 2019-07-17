@@ -2,7 +2,7 @@
 Created on 20 dic. 2018
 
 @author: Iñigo
-@version: 20/12/18
+@version: 15/07/189
 
 '''
 
@@ -73,7 +73,7 @@ class LatticeHandler:
     #[[VolumeValues],
     #[EnergyValues],
     #[EnthalpyValues]]
-    #Writes in a file the every meanSteps
+    #Writes in a file the measurements of the system every meanSteps
     def getSystemEvolution(self, lattice, inputData, meanSteps):
         #Opening file and writting header
         fileName="Measurements_T"+str(inputData.getT())
@@ -114,6 +114,7 @@ class LatticeHandler:
         #Writting mean steps
         line_new="Steps used for measurement="+str(meanSteps)
         fw.write(line_new+"\n")
+
         #Data columns
         line_new="Volume"+"\t"+"Energy"+"\t"+"Enthalpy"
         fw.write(line_new+"\n")
@@ -570,14 +571,21 @@ class LatticeHandler:
         for o in range(0, nDataSets):
             y2.append(meanFieldVolume) 
         plt.plot(x,y,x2,y2,linewidth=2.0)
-        plt.title("Volume", fontsize=14)
+        plt.title("Volume-T", fontsize=14)
         plt.xscale('log')
+        plt.xlabel("T/K")
+        plt.ylabel("V/Jm^3")
         plt.show()              
        
     #Method that shows the evolution of the volume as the temperature increases
     def volEvoTemps(self, iniT, finT, tempIncrement):
         Volumes=[]
         temps=[]
+        #File to write simulation mean volume values
+        writeFileName="Volume_Temperature"
+        fw=open(writeFileName, "w")
+        #Header of the file
+        fw.write("T/K"+"\t"+"V/m^3"+"\n")
         for T in range(iniT, finT+tempIncrement, tempIncrement):
             temps.append(T)
             #Data file corresponding to the needed parameters
@@ -614,8 +622,8 @@ class LatticeHandler:
             nMeasurements=int(n/meanSteps)
             #Reading all the measurements before the response functions
             nLine=13
+            volumeSet=[]
             for j in range(0, nMeasurements):
-                volumeSet=[]
                 values=lines[nLine].split("\t")
                 #Introducing read volume (values[0]) in the data set
                 volumeSet.append(float(values[0]))
@@ -623,6 +631,7 @@ class LatticeHandler:
                 nLine+=1
                 #Introducing data set into data array
             Volumes.append(statistics.mean(volumeSet))
+            fw.write(str(T)+"\t"+str(statistics.mean(volumeSet))+"+-"+str(statistics.stdev(volumeSet))+"\n")
 
         #Calculating theoretical values
         VTheory=[]
@@ -640,8 +649,93 @@ class LatticeHandler:
 
         #Plotting results
         plt.plot(temps,Volumes,TTheory, VTheory, linewidth=2.0)
-        plt.title("Volume", fontsize=14)
-        plt.show()    
+        plt.title("Volume-Temperature", fontsize=14)
+        plt.xlabel("T/K")
+        plt.ylabel("V/m^3")
+        plt.show() 
+
+        #Showing values on console
+        print("T  "+str(temps))
+        print("Simulation values")
+        print(Volumes) 
+
+    #Method that shows the evolution of the volume as the pressure increases
+    def volEvoPress(self, iniP, finP, pressureIncrement):
+        Volumes=[]
+        pressures=[]
+        for P in range(iniP, finP+pressureIncrement, pressureIncrement):
+            pressures.append(P)
+            #Data file corresponding to the needed parameters
+            fileName="Measurements_P"+str(P)
+            #Retrieving data from the file
+            fr=open(fileName, "r")
+            #Getting file lines
+            lines=fr.readlines()
+            #Reading inputData parameters
+            line=lines[0].split("=")
+            l=float(line[1])
+            line=lines[1].split("=")
+            T=float(line[1])
+            line=lines[2].split("=")
+            n=float(line[1])
+            line=lines[4].split("=")
+            vb=float(line[1])
+            line=lines[5].split("=")
+            vs=float(line[1])
+            line=lines[6].split("=")
+            fvb=float(line[1])
+            line=lines[7].split("=")
+            fvs=float(line[1])
+            line=lines[8].split("=")
+            eb=float(line[1])
+            line=lines[9].split("=")
+            es=float(line[1])
+            line=lines[10].split("=")
+            p=float(line[1])
+            line=lines[11].split("=")
+            meanSteps=float(line[1])
+            lambdaVol=fvb/fvs
+            deltaV=vb-vs
+            deltaE=es-eb
+            #Number of measurements
+            nMeasurements=int(n/meanSteps)
+            #Reading all the measurements before the response functions
+            nLine=13
+            volumeSet=[]
+            for j in range(0, nMeasurements):
+                values=lines[nLine].split("\t")
+                #Introducing read volume (values[0]) in the data set
+                volumeSet.append(float(values[0]))
+                #Changing line
+                nLine+=1
+                #Introducing data set into data array
+            Volumes.append(statistics.mean(volumeSet))
+
+        #Calculating theoretical values
+        VTheory=[]
+        PTheory=[]
+        for P in range(iniP, finP):
+            #Function to calculate the volume given by the mean field theory
+            def fun(v):
+                return Constant().K()/deltaV*math.log(lambdaVol*(vb-v)/(v-vs))-(P-6*deltaE/deltaV*\
+                    (v-vs)/deltaV)/T
+            #Calculating volume of the cell using Newton's method
+            volumeUnitCell=Numericalmethods().newton(fun, (vb+vs)/2, 10e-7, 10e-32)
+            meanFieldVolume=volumeUnitCell*math.pow(l,3)
+            VTheory.append(meanFieldVolume)
+            PTheory.append(P)
+
+        #Plotting results
+        plt.plot(pressures,Volumes,PTheory, VTheory, linewidth=2.0)
+        plt.title("Volume-Pressure", fontsize=14)
+        plt.xlabel("P/Pa")
+        plt.ylabel("V/m^3")
+        plt.show() 
+
+        #Showing values on console
+        print("P  "+str(pressures))
+        print("Simulation values")
+        print(Volumes) 
     
     #Method that shows the evolution of the energy for a given temperature using the corresponding
     #data file 'Measurements_Tx'. It needs the number of values for the mean
@@ -736,12 +830,29 @@ class LatticeHandler:
         plt.plot(x,y,x2,y2,linewidth=2.0)
         plt.title("Energy", fontsize=14)
         plt.xscale('log')
+        plt.xlabel("T/K")
+        plt.ylabel("E/J")
         plt.show()
+        
 
-    #Method that shows the evolution of the energy as the temperature increases
+        #Showing values on console
+        print("T  "+str(x))
+        print("Simulation values")
+        print(y)
+        print("Theoretical values")
+        print(y2)
+
+
+    #Method that shows the evolution of the energy as the temperature increases. Creates a file with the simulation results.
     def energyEvoTemps(self, iniT, finT, tempIncrement):
         Energies=[]
         temps=[]
+        #File to write simulation mean energy values
+        writeFileName="Energy_Temperature"
+        fw=open(writeFileName, "w")
+        #Header of the file
+        fw.write("T/K"+"\t"+"Energy/J"+"\n")
+        #calculating mean energy for every simulation temperature
         for T in range(iniT, finT+tempIncrement, tempIncrement):
             temps.append(T)
             #Data file corresponding to the needed parameters
@@ -776,17 +887,19 @@ class LatticeHandler:
             deltaE=es-eb
             #Number of measurements
             nMeasurements=int(n/meanSteps)
-            #Reading all the measurements before the response functions
+            #Reading all the measurements before the response functions and introducing energies into array
             nLine=13
+            energySet=[]
             for j in range(0, nMeasurements):
-                energySet=[]
                 values=lines[nLine].split("\t")
                 #Introducing read energy (values[1]) in the data set
                 energySet.append(float(values[1]))
                 #Changing line
                 nLine+=1
-                #Introducing data set into data array
+            #Introducing data set mean into data array
             Energies.append(statistics.mean(energySet))
+            #Printing mean energies in file
+            fw.write(str(T)+"\t"+str(statistics.mean(energySet))+"+-"+str(statistics.stdev(energySet))+"\n")
 
         #Calculating theoretical values
         ETheory=[]
@@ -797,7 +910,7 @@ class LatticeHandler:
                 return Constant().K()/deltaV*math.log(lambdaVol*(vb-v)/(v-vs))-(p-6*deltaE/deltaV*\
                     (v-vs)/deltaV)/T
             #Calculating energy of the cell using Newton's method
-            volumeUnitCell=Numericalmethods().newton(fun, 1.05*vs, 10e-7, 10e-32)
+            volumeUnitCell=Numericalmethods().newton(fun, (vb+vs)/2, 10e-7, 10e-32)
             energyUnitCell=-3*deltaE*math.pow((volumeUnitCell-vs)/deltaV,2)
             meanFieldEnergy=energyUnitCell*math.pow(l,3)
             ETheory.append(meanFieldEnergy)
@@ -805,7 +918,9 @@ class LatticeHandler:
 
         #Plotting results
         plt.plot(temps,Energies,TTheory,ETheory,linewidth=2.0)
-        plt.title("Volume", fontsize=14)
+        plt.title("Energy", fontsize=14)
+        plt.xlabel("T/K")
+        plt.ylabel("E/J")
         plt.show()
 
     #Method for calculating theoretically the isothermal compressibility
