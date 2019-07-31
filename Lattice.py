@@ -24,8 +24,11 @@ class Lattice:
     probArrayMinus=[0, 0, 0, 0, 0, 0, 0]
     nVPlus=0
     nVMinus=0
+    inputData=0
     #Constructor
     def __init__(self, inputData):
+        #Assigning inputData object as attribute
+        self.inputData=inputData
         #Creating random lattice
         self.lattice=np.zeros((inputData.getL(),inputData.getL(),inputData.getL()),\
                          dtype=int)
@@ -138,7 +141,35 @@ class Lattice:
     def changePlusToMinus(self):
         self.nVMinus+=1
         self.nVPlus-=1
+    #Method to change the inputData attribute, recalculates the change probabilities
+    def changeInputData(self, T, P):
+        self.inputData.changeT(T)
+        self.inputData.changeP(P)
 
+        #Volume difference in 1 cell
+        vChange=self.inputData.getVb()-self.inputData.getVs()
+        #Energy difference in 1 volume change
+        eChange=self.inputData.getEb()-self.inputData.getEs()
+        #Probabilities for energy change from V+ to V-
+        self.probArrayPlus[0]=1
+        self.probArrayPlus[1]=math.pow(self.inputData.getLambda(),-1)*math.exp(-((eChange-self.inputData.getP()*vChange)/Constant().K()/self.inputData.getT()))
+        self.probArrayPlus[2]=math.pow(self.inputData.getLambda(),-1)*math.exp(-((2*eChange-self.inputData.getP()*vChange)/Constant().K()/self.inputData.getT()))
+        self.probArrayPlus[3]=math.pow(self.inputData.getLambda(),-1)*math.exp(-((3*eChange-self.inputData.getP()*vChange)/Constant().K()/self.inputData.getT()))
+        self.probArrayPlus[4]=math.pow(self.inputData.getLambda(),-1)*math.exp(-((4*eChange-self.inputData.getP()*vChange)/Constant().K()/self.inputData.getT()))
+        self.probArrayPlus[5]=math.pow(self.inputData.getLambda(),-1)*math.exp(-((5*eChange-self.inputData.getP()*vChange)/Constant().K()/self.inputData.getT()))
+        self.probArrayPlus[6]=math.pow(self.inputData.getLambda(),-1)*math.exp(-((6*eChange-self.inputData.getP()*vChange)/Constant().K()/self.inputData.getT()))
+        #Probabilities for energy change from V- to V+
+        self.probArrayMinus[0]=1
+        self.probArrayMinus[1]=math.pow(self.inputData.getLambda(),1)*math.exp(((eChange-self.inputData.getP()*vChange)/Constant().K()/self.inputData.getT()))
+        self.probArrayMinus[2]=math.pow(self.inputData.getLambda(),1)*math.exp(((2*eChange-self.inputData.getP()*vChange)/Constant().K()/self.inputData.getT()))
+        self.probArrayMinus[3]=math.pow(self.inputData.getLambda(),1)*math.exp(((3*eChange-self.inputData.getP()*vChange)/Constant().K()/self.inputData.getT()))
+        self.probArrayMinus[4]=math.pow(self.inputData.getLambda(),1)*math.exp(((4*eChange-self.inputData.getP()*vChange)/Constant().K()/self.inputData.getT()))
+        self.probArrayMinus[5]=math.pow(self.inputData.getLambda(),1)*math.exp(((5*eChange-self.inputData.getP()*vChange)/Constant().K()/self.inputData.getT()))
+        self.probArrayMinus[6]=math.pow(self.inputData.getLambda(),1)*math.exp(((6*eChange-self.inputData.getP()*vChange)/Constant().K()/self.inputData.getT()))
+
+    #Method to get the simulation parameters
+    def getInputData(self):
+        return self.inputData
     #Method to return the lattice
     def getLattice(self):
         return self.lattice

@@ -27,7 +27,13 @@ class InputData:
         self.freeSVolume=fsv
         self.freeLambda=fbv/fsv
 
-    
+    #Method to change the temperature of the simulation
+    def changeT(self, T):
+        self.temperature=T
+    #Method to change the pressure of the simulation
+    def changeP(self,P):
+        self.pressure=P
+
     #Operations to get the data for the simulation
     def getT(self):
         return self.temperature

@@ -632,7 +632,13 @@ class LatticeHandler:
                 #Introducing data set into data array
             Volumes.append(statistics.mean(volumeSet))
             fw.write(str(T)+"\t"+str(statistics.mean(volumeSet))+"+-"+str(statistics.stdev(volumeSet))+"\n")
-
+        fw.write("Pressure="+str(p)+"\n")
+        fw.write("Temperature="+str(T)+"\n")
+        fw.write("L="+str(l)+"\n")
+        fw.write("dV="+str(deltaV)+"\n")
+        fw.write("dE="+str(deltaE)+"\n")
+        fw.write("Lambda="+str(lambdaVol)+"\n")
+        
         #Calculating theoretical values
         VTheory=[]
         TTheory=[]
@@ -712,6 +718,11 @@ class LatticeHandler:
                 #Introducing data set into data array
             Volumes.append(statistics.mean(volumeSet))
             fw.write(str(P)+"\t"+str(statistics.mean(volumeSet))+"+-"+str(statistics.stdev(volumeSet))+"\n")
+        fw.write("Temperature="+str(T)+"\n")
+        fw.write("L="+str(l)+"\n")
+        fw.write("dV="+str(deltaV)+"\n")
+        fw.write("dE="+str(deltaE)+"\n")
+        fw.write("Lambda="+str(lambdaVol)+"\n")
         #Showing values on console
         print("P  "+str(pressures))
         print("Simulation values")
@@ -902,6 +913,11 @@ class LatticeHandler:
             Energies.append(statistics.mean(energySet))
             #Printing mean energies in file
             fw.write(str(T)+"\t"+str(statistics.mean(energySet))+"+-"+str(statistics.stdev(energySet))+"\n")
+        fw.write("Pressure="+str(p)+"\n")
+        fw.write("L="+str(l)+"\n")
+        fw.write("dV="+str(deltaV)+"\n")
+        fw.write("dE="+str(deltaE)+"\n")
+        fw.write("Lambda="+str(lambdaVol)+"\n")
 
         #Calculating theoretical values
         ETheory=[]
