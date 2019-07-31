@@ -12,4 +12,4 @@ Created on 15 feb. 2019
 class Constant:
     #Boltzmann constant
     def K(self):
-        return 1.38e-23
+        return 1.3806488e-23

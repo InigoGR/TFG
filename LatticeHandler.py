@@ -642,7 +642,7 @@ class LatticeHandler:
                 return Constant().K()/deltaV*math.log(lambdaVol*(vb-v)/(v-vs))-(p-6*deltaE/deltaV*\
                     (v-vs)/deltaV)/T
             #Calculating volume of the cell using Newton's method
-            volumeUnitCell=Numericalmethods().newton(fun, 1.1*vs, 10e-7, 10e-32)
+            volumeUnitCell=Numericalmethods().newton(fun, (vb+vs)/2, 10e-7, 10e-32)
             meanFieldVolume=volumeUnitCell*math.pow(l,3)
             VTheory.append(meanFieldVolume)
             TTheory.append(T)
@@ -654,15 +654,16 @@ class LatticeHandler:
         plt.ylabel("V/m^3")
         plt.show() 
 
-        #Showing values on console
-        print("T  "+str(temps))
-        print("Simulation values")
-        print(Volumes) 
 
     #Method that shows the evolution of the volume as the pressure increases
     def volEvoPress(self, iniP, finP, pressureIncrement):
         Volumes=[]
         pressures=[]
+        #File to write simulation mean volume values
+        writeFileName="Volume_Pressure"
+        fw=open(writeFileName, "w")
+        #Header of the file
+        fw.write("P/Pa"+"\t"+"V/m^3"+"\n")
         for P in range(iniP, finP+pressureIncrement, pressureIncrement):
             pressures.append(P)
             #Data file corresponding to the needed parameters
@@ -710,17 +711,22 @@ class LatticeHandler:
                 nLine+=1
                 #Introducing data set into data array
             Volumes.append(statistics.mean(volumeSet))
+            fw.write(str(P)+"\t"+str(statistics.mean(volumeSet))+"+-"+str(statistics.stdev(volumeSet))+"\n")
+        #Showing values on console
+        print("P  "+str(pressures))
+        print("Simulation values")
+        print(Volumes) 
 
         #Calculating theoretical values
         VTheory=[]
         PTheory=[]
-        for P in range(iniP, finP):
+        for P in range(iniP, finP, int(1e3)):
             #Function to calculate the volume given by the mean field theory
             def fun(v):
                 return Constant().K()/deltaV*math.log(lambdaVol*(vb-v)/(v-vs))-(P-6*deltaE/deltaV*\
                     (v-vs)/deltaV)/T
             #Calculating volume of the cell using Newton's method
-            volumeUnitCell=Numericalmethods().newton(fun, (vb+vs)/2, 10e-7, 10e-32)
+            volumeUnitCell=Numericalmethods().newton(fun, (vb+vs)/2, 10e-7, 10e-34)
             meanFieldVolume=volumeUnitCell*math.pow(l,3)
             VTheory.append(meanFieldVolume)
             PTheory.append(P)
@@ -732,10 +738,6 @@ class LatticeHandler:
         plt.ylabel("V/m^3")
         plt.show() 
 
-        #Showing values on console
-        print("P  "+str(pressures))
-        print("Simulation values")
-        print(Volumes) 
     
     #Method that shows the evolution of the energy for a given temperature using the corresponding
     #data file 'Measurements_Tx'. It needs the number of values for the mean
@@ -817,7 +819,7 @@ class LatticeHandler:
             return Constant().K()/deltaV*math.log(lambdaVol*(vb-v)/(v-vs))-(p-6*deltaE/deltaV*\
                 (v-vs)/deltaV)/T
 
-        volumeUnitCell=Numericalmethods().newton(fun, 1.05*vs, 10e-9, 10e-32)
+        volumeUnitCell=Numericalmethods().newton(fun, (vb+vs)/2, 10e-9, 10e-32)
         energyUnitCell=-3*deltaE*math.pow((volumeUnitCell-vs)/deltaV,2)
         meanFieldEnergy=energyUnitCell*math.pow(l,3)
         
