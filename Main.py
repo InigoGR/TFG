@@ -17,7 +17,7 @@ valuesForMean=100
 #Simulation temperatures
 iniT=200    #Initial temperature
 finT=300    #Final temperature  
-tempIncrement=10    #Increment of temperature in every step
+tempIncrement=10    #Increment of temperature in each simulation
 #simulation steps
 mcSteps=10000000    #MonteCarlo steps during measurement phase 
 initialEq=30000000  #Steps to reach the equilibrium before the simulation
@@ -27,7 +27,7 @@ P=5e7
 
 
 inputdata=InputData(50, iniT, mcSteps, Eq,
-                  3.653271338e-29, 3.321078553e-29, 1, 5, -1.660577881e-21, 0, P)   #Creating Inputdata object containing the simulation parameters
+                  3.653271338e-29, 3.321078553e-29, 1, 5, -1.660577881e-21, 0, P)   #Creating Inputdata object containing the initial simulation parameters
 lattice=Lattice(inputdata)  #Creating Lattice object using the simulation parameters contained in the Inputdata object
 
 #Initial equilibrium steps
@@ -35,7 +35,7 @@ print("Initial thermalization")
 for i in range(0, initialEq):
         if math.fmod(i/initialEq*100,1.0)==0: #Checking progress of the equilibrium steps
             print(str(i/(initialEq)*100)+"%")
-        LatticeHandler().changeVol(lattice, lattice.getInputData()) #Attempting to change volume of one cell
+        LatticeHandler().changeVol(lattice, lattice.getInputData()) #Attempting to change state of one cell
 
 #Repeating simulation for the specified temperatures
 for T in range(iniT, finT+tempIncrement, tempIncrement):
@@ -48,7 +48,7 @@ for T in range(iniT, finT+tempIncrement, tempIncrement):
     for i in range(0, inputdata.getEq()):
         if math.fmod(i/Eq*100,1.0)==0:  #Checking progress of the equilibrium steps
             print(str(i/(Eq)*100)+"%")
-        LatticeHandler().changeVol(lattice, lattice.getInputData()) #Attempting to change volume of one cell
+        LatticeHandler().changeVol(lattice, lattice.getInputData()) #Attempting to change state of one cell
 
     #Getting measurements of the evolution of volume, intermolecular energy and enthalpy
     measurements=LatticeHandler().getSystemEvolution(lattice, lattice.getInputData(), meanSteps)    

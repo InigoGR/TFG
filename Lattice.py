@@ -16,15 +16,16 @@ import math
 import numpy as np
 
 class Lattice:
-    lattice=0
-    volume=0
-    energy=0
-    neighbor=0
-    probArrayPlus=[0, 0, 0, 0, 0, 0, 0]
-    probArrayMinus=[0, 0, 0, 0, 0, 0, 0]
-    nVPlus=0
-    nVMinus=0
-    inputData=0
+    #Defining attributes of the lattice class
+    lattice=0   #Matrix containing the states of the cells (V+=1, V-=0)
+    volume=0    #Volume of the lattice
+    energy=0    #Energy of the lattice
+    neighbor=0  #Matrix which contains for each cell the coordinates of its six neighbors
+    probArrayPlus=[0, 0, 0, 0, 0, 0, 0] #Probability of transition form V+ to V- for the seven possible cases
+    probArrayMinus=[0, 0, 0, 0, 0, 0, 0]    #Probability of transition form V- to V+ for the seven possible cases
+    nVPlus=0    #Number of cells in the V+ state
+    nVMinus=0   #Number of ccells in the V- state
+    inputData=0 #Object containing the parameters of the simulation
     #Constructor
     def __init__(self, inputData):
         #Assigning inputData object as attribute
@@ -32,7 +33,7 @@ class Lattice:
         #Creating random lattice
         self.lattice=np.zeros((inputData.getL(),inputData.getL(),inputData.getL()),\
                          dtype=int)
-        #Randomizing cells
+        #Randomizing state of the cells
         for x in range(0, inputData.getL()):
             for y in range(0, inputData.getL()):
                 for z in range(0, inputData.getL()):
@@ -56,7 +57,7 @@ class Lattice:
             for y in range(0, inputData.getL()):
                 for z in range(0, inputData.getL()):
                     #Creating in each cell a list of the neighbor
-                    #with their coords taking into account periodic
+                    #with their coordinatess taking into account periodic
                     #boundary conditions
 
                     #Default neighbor index
@@ -66,7 +67,7 @@ class Lattice:
                     Yindex2=y-1
                     Zindex1=z+1
                     Zindex2=z-1
-                    #Checking for boundary condiction
+                    #Checking for boundary condition
                     if x==0:
                         Xindex2=inputData.getL()-1
                     elif x==inputData.getL()-1:
@@ -103,8 +104,8 @@ class Lattice:
                                  neighborCoord[2]]
                         #Calculating the intermolecular energy of neighbors
                         energy=energy+(bigVol*inputData.getEb()+(6-bigVol)*inputData.getEs())
-        self.energy=energy/2
-        #Volume difference in 1 cell
+        self.energy=energy/2 #The interaction between molecules was accounted for twice before
+        #Volume difference between V+ and V-
         vChange=inputData.getVb()-inputData.getVs()
         #Energy difference in 1 volume change
         eChange=inputData.getEb()-inputData.getEs()

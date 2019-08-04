@@ -14,18 +14,18 @@ class InputData:
     #            small cell volume, big free volume, small free volume, big energy, small energy, pressure
     def __init__( self, l=4, t=200, n=1000000, nEquil=1000,
                   vb=2, vs=1, fbv=1, fsv=0.2, eb=1, es=2, p=1 ) :
-        self.length=l
-        self.temperature=t
-        self.steps=n
-        self.equilibrium=nEquil
-        self.bigVolume=vb
-        self.smallVolume=vs
-        self.bigEnergy=eb
-        self.smallEnergy=es
-        self.pressure=p
-        self.freeBVolume=fbv
-        self.freeSVolume=fsv
-        self.freeLambda=fbv/fsv
+        self.length=l   #Length of the lattice in cells
+        self.temperature=t  #Temperature of the simulation
+        self.steps=n    #MonteCarlo steps for the measurement phase
+        self.equilibrium=nEquil #MonteCarlo steps for the thermalization phase 
+        self.bigVolume=vb   #Volume of the V+ state
+        self.smallVolume=vs #Volume of the V- state
+        self.bigEnergy=eb   #Energy of the V+ V+ interaction
+        self.smallEnergy=es #Energy of the V+ V- or V- V- interaction
+        self.pressure=p #Pressure of the simulation
+        self.freeBVolume=fbv    #Free volume for the V+ state
+        self.freeSVolume=fsv    #Free volume for the V- state
+        self.freeLambda=fbv/fsv #Lambda parameter
 
     #Method to change the temperature of the simulation
     def changeT(self, T):
