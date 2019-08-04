@@ -109,7 +109,7 @@ class Lattice:
         #Energy difference in 1 volume change
         eChange=inputData.getEb()-inputData.getEs()
         #Probabilities for energy change from V+ to V-
-        self.probArrayPlus[0]=1
+        self.probArrayPlus[0]=math.pow(inputData.getLambda(),-1)*math.exp(-((-inputData.getP()*vChange)/Constant().K()/inputData.getT()))
         self.probArrayPlus[1]=math.pow(inputData.getLambda(),-1)*math.exp(-((eChange-inputData.getP()*vChange)/Constant().K()/inputData.getT()))
         self.probArrayPlus[2]=math.pow(inputData.getLambda(),-1)*math.exp(-((2*eChange-inputData.getP()*vChange)/Constant().K()/inputData.getT()))
         self.probArrayPlus[3]=math.pow(inputData.getLambda(),-1)*math.exp(-((3*eChange-inputData.getP()*vChange)/Constant().K()/inputData.getT()))
@@ -117,7 +117,7 @@ class Lattice:
         self.probArrayPlus[5]=math.pow(inputData.getLambda(),-1)*math.exp(-((5*eChange-inputData.getP()*vChange)/Constant().K()/inputData.getT()))
         self.probArrayPlus[6]=math.pow(inputData.getLambda(),-1)*math.exp(-((6*eChange-inputData.getP()*vChange)/Constant().K()/inputData.getT()))
         #Probabilities for energy change from V- to V+
-        self.probArrayMinus[0]=1
+        self.probArrayMinus[0]=math.pow(inputData.getLambda(),1)*math.exp(((-inputData.getP()*vChange)/Constant().K()/inputData.getT()))
         self.probArrayMinus[1]=math.pow(inputData.getLambda(),1)*math.exp(((eChange-inputData.getP()*vChange)/Constant().K()/inputData.getT()))
         self.probArrayMinus[2]=math.pow(inputData.getLambda(),1)*math.exp(((2*eChange-inputData.getP()*vChange)/Constant().K()/inputData.getT()))
         self.probArrayMinus[3]=math.pow(inputData.getLambda(),1)*math.exp(((3*eChange-inputData.getP()*vChange)/Constant().K()/inputData.getT()))

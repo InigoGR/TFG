@@ -2,12 +2,12 @@
 Created on 20 dic. 2018
 
 @author: Iñigo
-@version: 15/07/189
+@version: 04/08/19
 
 '''
 
 #LatticeCounter.py
-#Class responsible for the operations on the lattice simulation as well as theoretical calculations 
+#Class responsible for the operations on the lattice simulation, theoretical calculations and result management.
 
 from InputData import *
 from Lattice import *
@@ -22,27 +22,29 @@ import matplotlib.pyplot as plt
 
 class LatticeHandler:
     #Method that tries a random cell volume change and checks if the system accepts, making
-    #the changes
+    #the changes in volume, energy and configuration when necessary.
     def changeVol(self, lattice, inputData):
+        #Choosing random cell in the lattice
         x=random.randint(0,inputData.getL()-1)
         y=random.randint(0,inputData.getL()-1)
         z=random.randint(0,inputData.getL()-1)
-        volumeChange=0
-        tempLattice=lattice.getLattice()
-        neighborLattice=lattice.getNeighbors()
-        volume=lattice.getVolume()
-        energy=lattice.getEnergy()
+        volumeChange=0  #Parameter to store the change in volume
+        tempLattice=lattice.getLattice()    #Storing state of the lattice (matrix of 0s and 1s)
+        neighbors=lattice.getNeighbors()[x,y,z]  #Storing lattice of neighbors
+        volume=lattice.getVolume()  #Storing volume of the lattice
+        energy=lattice.getEnergy()  #Storing energy of the lattice
         #Counting number of neighbors with V+
-        n=0
-        for neighborCoord in neighborLattice[x,y,z]:
-            n=n+tempLattice[neighborCoord[0], neighborCoord[1], neighborCoord[2]]
+        n=0 #parameter to count the number of neighbors in V+ state
+        #Counting V+ neighbors
+        for neighborCoord in neighbors:  #Getting coordinates in the lattice for every neighbor  
+            n=n+tempLattice[neighborCoord[0], neighborCoord[1], neighborCoord[2]]   #Cumulative counting (V+=1, V-=0)
         #Getting intermolecular energy change
         #Case initialV=V-
         if tempLattice[x,y,z]==0:
-            if random.uniform(0,1)<(lattice.getNVMinus()/(lattice.getNVPlus()+1)*lattice.probArrayMinus[n]):
+            if random.uniform(0,1)<(lattice.getNVMinus()/(lattice.getNVPlus()+1)*lattice.probArrayMinus[n]):    #The change of state of the cell is accepted
             
-                intEnergyVar=n*(inputData.getEb()-inputData.getEs())
-                volumeChange=inputData.getVb()-inputData.getVs()
+                intEnergyVar=n*(inputData.getEb()-inputData.getEs())    #Calculating variation of the energy
+                volumeChange=inputData.getVb()-inputData.getVs()    #Calculating variation of the volume   
                 #Changing volume
                 lattice.changeVolume(volume+volumeChange)
                 #Changing cell volume
@@ -53,11 +55,12 @@ class LatticeHandler:
                 lattice.changeMinusToPlus()
 
         #Case initialV=V+
-        else:
-            intEnergyVar=n*(inputData.getEs()-inputData.getEb())
-            volumeChange=inputData.getVs()-inputData.getVb()      
+        else:      
         #Checking if the change is accepted
-            if random.uniform(0,1)<(lattice.getNVPlus()/(lattice.getNVMinus()+1)*lattice.probArrayPlus[n]):
+            if random.uniform(0,1)<(lattice.getNVPlus()/(lattice.getNVMinus()+1)*lattice.probArrayPlus[n]): #The change of state of the cell is accepted
+                
+                intEnergyVar=n*(inputData.getEs()-inputData.getEb())    #Calculating variation of the energy
+                volumeChange=inputData.getVs()-inputData.getVb()    #Calculating variation of the volume
                 #Changing volume
                 lattice.changeVolume(lattice.getVolume()+volumeChange)
                 #Changing cell volume
@@ -90,10 +93,10 @@ class LatticeHandler:
         #Writting equilibrium steps
         line_new="Equilibrium steps="+str(inputData.getEq())
         fw.write(line_new+"\n")
-        #Writting big cell volume
+        #Writting V+ volume
         line_new="Big cell volume="+str(inputData.getVb())
         fw.write(line_new+"\n")
-        #Writting small cell volume
+        #Writting V- volume
         line_new="Small cell volume="+str(inputData.getVs())
         fw.write(line_new+"\n")
         #Writting big free volume
@@ -102,10 +105,10 @@ class LatticeHandler:
         #Writting small free volume
         line_new="Small free volume="+str(inputData.getFsv())
         fw.write(line_new+"\n")
-        #Writting energy of big cell interaction
+        #Writting energy of V+ V+ interaction
         line_new="+ Interaction energy="+str(inputData.getEb())
         fw.write(line_new+"\n")
-        #Writting energy of small cell interaction
+        #Writting energy of V+ V- or V- V- interaction
         line_new="- Interaction energy="+str(inputData.getEs())
         fw.write(line_new+"\n")
         #Writting pressure
@@ -124,7 +127,7 @@ class LatticeHandler:
         enthalpyValues=[]
         #The lattice state is stored every meanSteps steps
         counter=1
-        #Number of volumes to be registered
+        #Number of volumes to be registered (Total amount of steps divided by the steps taken between measurements)
         nVols=int(inputData.getN()/meanSteps)
 
         print("Taking measurements")
@@ -133,22 +136,22 @@ class LatticeHandler:
             vol=0
             energy=0
             enthalpy=0
-            #Changing cell volumes meanSteps times
+            #Changing cell volumes meanSteps times before taking a measurement
             for j in range(0, meanSteps):
-                LatticeHandler().changeVol(lattice, inputData)
+                LatticeHandler().changeVol(lattice, inputData)  #Try to change state of one cell
             #Getting state of the lattice
-            vol=lattice.getVolume()
-            energy=lattice.getEnergy()
-            enthalpy=energy+inputData.getP()*vol
+            vol=lattice.getVolume() #Getting volume of the lattice
+            energy=lattice.getEnergy()  #Getting energy of the lattice
+            enthalpy=energy+inputData.getP()*vol    #Getting enthalpy of the lattice
             #Adding measurements to the data arrays
-            volumeValues.append(vol)
-            energyValues.append(energy)
-            enthalpyValues.append(enthalpy)
+            volumeValues.append(vol)    #Adding measured volume to measurements array
+            energyValues.append(energy) #Adding measured energy to measurements array
+            enthalpyValues.append(enthalpy) #Adding measured enthalpy to measurements array
             #Saving parameters in the measurements file
             line_new=str(vol)+"\t"+str(energy)+"\t"+str(enthalpy)
             fw.write(line_new+"\n")
             #Simulation progress indicator
-            if math.fmod(counter/nVols*100,1.0)==0:
+            if math.fmod(counter/nVols*100,1.0)==0: #Checking progress of the measurement phase
                 print(str(counter/(nVols)*100)+"%")
             counter+=1
 
@@ -570,7 +573,8 @@ class LatticeHandler:
         y2=[]
         for o in range(0, nDataSets):
             y2.append(meanFieldVolume) 
-        plt.plot(x,y,x2,y2,linewidth=2.0)
+        plt.errorbar(x,y,error, marker='o')
+        plt.plot(x2,y2,linewidth=2.0)
         plt.title("Volume-T", fontsize=14)
         plt.xscale('log')
         plt.xlabel("T/K")
@@ -580,6 +584,7 @@ class LatticeHandler:
     #Method that shows the evolution of the volume as the temperature increases
     def volEvoTemps(self, iniT, finT, tempIncrement):
         Volumes=[]
+        error=[]
         temps=[]
         #File to write simulation mean volume values
         writeFileName="Volume_Temperature"
@@ -631,7 +636,8 @@ class LatticeHandler:
                 nLine+=1
                 #Introducing data set into data array
             Volumes.append(statistics.mean(volumeSet))
-            fw.write(str(T)+"\t"+str(statistics.mean(volumeSet))+"+-"+str(statistics.stdev(volumeSet))+"\n")
+            error.append(statistics.stdev(volumeSet))
+            fw.write(str(T)+"\t"+str(statistics.mean(volumeSet))+"  +-  "+str(statistics.stdev(volumeSet))+"\n")
         fw.write("Pressure="+str(p)+"\n")
         fw.write("Temperature="+str(T)+"\n")
         fw.write("L="+str(l)+"\n")
@@ -654,7 +660,9 @@ class LatticeHandler:
             TTheory.append(T)
 
         #Plotting results
-        plt.plot(temps,Volumes,TTheory, VTheory, linewidth=2.0)
+        plt.errorbar(temps,Volumes,error,marker='o', linewidth=2.0, label='Sim')
+        plt.plot(TTheory, VTheory, linewidth=2.0, linestyle='dashed', label='Theory')
+        plt.legend()
         plt.title("Volume-Temperature", fontsize=14)
         plt.xlabel("T/K")
         plt.ylabel("V/m^3")
@@ -664,6 +672,7 @@ class LatticeHandler:
     #Method that shows the evolution of the volume as the pressure increases
     def volEvoPress(self, iniP, finP, pressureIncrement):
         Volumes=[]
+        error=[]
         pressures=[]
         #File to write simulation mean volume values
         writeFileName="Volume_Pressure"
@@ -717,36 +726,52 @@ class LatticeHandler:
                 nLine+=1
                 #Introducing data set into data array
             Volumes.append(statistics.mean(volumeSet))
-            fw.write(str(P)+"\t"+str(statistics.mean(volumeSet))+"+-"+str(statistics.stdev(volumeSet))+"\n")
+            error.append(statistics.stdev(volumeSet))
+            fw.write(str(P)+"\t"+str(statistics.mean(volumeSet))+"  +-  "+str(statistics.stdev(volumeSet))+"\n")
         fw.write("Temperature="+str(T)+"\n")
         fw.write("L="+str(l)+"\n")
         fw.write("dV="+str(deltaV)+"\n")
         fw.write("dE="+str(deltaE)+"\n")
         fw.write("Lambda="+str(lambdaVol)+"\n")
+        fw.close()
         #Showing values on console
         print("P  "+str(pressures))
         print("Simulation values")
         print(Volumes) 
 
-        #Calculating theoretical values
-        VTheory=[]
-        PTheory=[]
-        for P in range(iniP, finP, int(1e3)):
-            #Function to calculate the volume given by the mean field theory
-            def fun(v):
-                return Constant().K()/deltaV*math.log(lambdaVol*(vb-v)/(v-vs))-(P-6*deltaE/deltaV*\
-                    (v-vs)/deltaV)/T
-            #Calculating volume of the cell using Newton's method
-            volumeUnitCell=Numericalmethods().newton(fun, (vb+vs)/2, 10e-7, 10e-34)
-            meanFieldVolume=volumeUnitCell*math.pow(l,3)
-            VTheory.append(meanFieldVolume)
-            PTheory.append(P)
+        #System parameters
+        c=6
+        v0=2e-5
+        deltaV=0.5e-5
+        deltaE=1000
+        lambdaVol=0.2
+        T=250
+
+        #Array of volumes
+        v=np.linspace(2.02e-5, 2.45e-5, num=1000)
+        #Array of presures
+        p1=[]
+        p2=[]
+        p3=[]
+        k=0
+        for volume in v:
+            p1.append(T*8.314/deltaV*math.log(lambdaVol*(v0+deltaV-volume)/(volume-v0)))
+            p2.append(c*deltaE/deltaV*(volume-v0)/deltaV)
+            p3.append(p1[k]+p2[k])
+            k+=1
+
+        #Turning to cubic meters
+        v=v/6.022e23
+        #Volume of the whole lattice
+        v=np.multiply(v,50*50*50)
 
         #Plotting results
-        plt.plot(pressures,Volumes,PTheory, VTheory, linewidth=2.0)
+        plt.errorbar(pressures,Volumes,error, marker='o', linewidth=2.0, label='sim')
+        plt.plot(p3,v, linestyle='dashed', label='theory')
         plt.title("Volume-Pressure", fontsize=14)
         plt.xlabel("P/Pa")
         plt.ylabel("V/m^3")
+        plt.legend()
         plt.show() 
 
     
@@ -840,25 +865,21 @@ class LatticeHandler:
         y2=[]
         for o in range(0, nDataSets):
             y2.append(meanFieldEnergy) 
-        plt.plot(x,y,x2,y2,linewidth=2.0)
+        plt.errorbar(x,y,error, marker='o', label='Sim')
+        plt.plot(x2,y2,linewidth=2.0, linestyle='dashed', label='Theory')
         plt.title("Energy", fontsize=14)
         plt.xscale('log')
         plt.xlabel("T/K")
         plt.ylabel("E/J")
+        plt.legend()
         plt.show()
         
-
-        #Showing values on console
-        print("T  "+str(x))
-        print("Simulation values")
-        print(y)
-        print("Theoretical values")
-        print(y2)
 
 
     #Method that shows the evolution of the energy as the temperature increases. Creates a file with the simulation results.
     def energyEvoTemps(self, iniT, finT, tempIncrement):
         Energies=[]
+        error=[]
         temps=[]
         #File to write simulation mean energy values
         writeFileName="Energy_Temperature"
@@ -911,8 +932,9 @@ class LatticeHandler:
                 nLine+=1
             #Introducing data set mean into data array
             Energies.append(statistics.mean(energySet))
+            error.append(statistics.stdev(energySet))
             #Printing mean energies in file
-            fw.write(str(T)+"\t"+str(statistics.mean(energySet))+"+-"+str(statistics.stdev(energySet))+"\n")
+            fw.write(str(T)+"\t"+str(statistics.mean(energySet))+"  +-  "+str(statistics.stdev(energySet))+"\n")
         fw.write("Pressure="+str(p)+"\n")
         fw.write("L="+str(l)+"\n")
         fw.write("dV="+str(deltaV)+"\n")
@@ -935,8 +957,10 @@ class LatticeHandler:
             TTheory.append(T)
 
         #Plotting results
-        plt.plot(temps,Energies,TTheory,ETheory,linewidth=2.0)
-        plt.title("Energy", fontsize=14)
+        plt.errorbar(temps,Energies,error, marker='o', linewidth=2.0, label='Sim')
+        plt.plot(TTheory,ETheory,linewidth=2.0, linestyle='dashed', label='Theory')
+        plt.legend()
+        plt.title("Energy-T", fontsize=14)
         plt.xlabel("T/K")
         plt.ylabel("E/J")
         plt.show()

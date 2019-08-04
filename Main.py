@@ -15,40 +15,41 @@ meanSteps=100
 #Number of measurements to do the mean
 valuesForMean=100
 #Simulation temperatures
-iniT=200
-finT=300
-tempIncrement=10
+iniT=200    #Initial temperature
+finT=300    #Final temperature  
+tempIncrement=10    #Increment of temperature in every step
 #simulation steps
-mcSteps=10000000
-initialEq=30000000
-Eq=8000000
+mcSteps=10000000    #MonteCarlo steps during measurement phase 
+initialEq=30000000  #Steps to reach the equilibrium before the simulation
+Eq=10000000 #Steps to reach equilibrium after changing the temperature of the system
 #Pressure
 P=5e7
 
 
 inputdata=InputData(50, iniT, mcSteps, Eq,
-                  3.653271338e-29, 3.321078553e-29, 1, 5, -1.660577881e-21, 0, P)
-lattice=Lattice(inputdata)
+                  3.653271338e-29, 3.321078553e-29, 1, 5, -1.660577881e-21, 0, P)   #Creating Inputdata object containing the simulation parameters
+lattice=Lattice(inputdata)  #Creating Lattice object using the simulation parameters contained in the Inputdata object
 
 #Initial equilibrium steps
 print("Initial thermalization")
 for i in range(0, initialEq):
-        if math.fmod(i/initialEq*100,1.0)==0:
+        if math.fmod(i/initialEq*100,1.0)==0: #Checking progress of the equilibrium steps
             print(str(i/(initialEq)*100)+"%")
-        LatticeHandler().changeVol(lattice, lattice.getInputData())
+        LatticeHandler().changeVol(lattice, lattice.getInputData()) #Attempting to change volume of one cell
 
+#Repeating simulation for the specified temperatures
 for T in range(iniT, finT+tempIncrement, tempIncrement):
     #Creation of the inputData with the desired parameters(L, T, MCs, Therm, Vb, Vs, FVb, FVs, Eb, Es, P)
     print(T)
     #Changing temperature of the simulation
-    lattice.changeInputData(T, P)
+    lattice.changeInputData(T, P)   #Changing simulation parameters
     print("Thermalization")
     #Setting new thermalization for new parameters
     for i in range(0, inputdata.getEq()):
-        if math.fmod(i/Eq*100,1.0)==0:
+        if math.fmod(i/Eq*100,1.0)==0:  #Checking progress of the equilibrium steps
             print(str(i/(Eq)*100)+"%")
-        LatticeHandler().changeVol(lattice, lattice.getInputData())
+        LatticeHandler().changeVol(lattice, lattice.getInputData()) #Attempting to change volume of one cell
 
     #Getting measurements of the evolution of volume, intermolecular energy and enthalpy
-    measurements=LatticeHandler().getSystemEvolution(lattice, lattice.getInputData(), meanSteps)
+    measurements=LatticeHandler().getSystemEvolution(lattice, lattice.getInputData(), meanSteps)    
    
