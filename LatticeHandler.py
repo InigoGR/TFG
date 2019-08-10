@@ -21,6 +21,19 @@ import matplotlib.pyplot as plt
 
 
 class LatticeHandler:
+    
+    #Method to get the state of the neighbors of each cell and register it in the neighborHistogram variable
+    def neighborStatistics(self, lattice):
+        L=lattice.getInputData().getL()
+        for x in range(0, L):
+            for y in range(0, L):
+                for z in range(0, L):
+                    neighbors=lattice.getNeighbors()[x,y,z]  #Storing neighbor coords
+                    n=0 #Number of neighbors in V+ state
+                    for neighborCoord in neighbors:  #Getting coordinates in the lattice for every neighbor  
+                        n=n+lattice.getLattice()[neighborCoord[0], neighborCoord[1], neighborCoord[2]]  
+                    lattice.changeHistogram(n) 
+    
     #Method that tries a random cell volume change and checks if the system accepts, making
     #the changes in volume, energy and configuration when necessary.
     def changeVol(self, lattice, inputData):
@@ -30,7 +43,7 @@ class LatticeHandler:
         z=random.randint(0,inputData.getL()-1)
         volumeChange=0  #Parameter to store the change in volume
         tempLattice=lattice.getLattice()    #Storing state of the lattice (matrix of 0s and 1s)
-        neighbors=lattice.getNeighbors()[x,y,z]  #Storing lattice of neighbors
+        neighbors=lattice.getNeighbors()[x,y,z]  #Storing neighbor coords
         volume=lattice.getVolume()  #Storing volume of the lattice
         energy=lattice.getEnergy()  #Storing energy of the lattice
         #Counting number of neighbors with V+
@@ -153,9 +166,10 @@ class LatticeHandler:
             #Simulation progress indicator
             if math.fmod(counter/nVols*100,1.0)==0: #Checking progress of the measurement phase
                 print(str(counter/(nVols)*100)+"%")
+                LatticeHandler().neighborStatistics(lattice)   #Updating neighbor histogram array
             counter+=1
 
-        fw.close()
+        fw.close()  #Closing file
         return [volumeValues, energyValues, enthalpyValues]
     
     #Method to calculate the mean thermal expansivity for a given temperature from the data files
@@ -566,7 +580,7 @@ class LatticeHandler:
             return Constant().K()/deltaV*math.log(lambdaVol*(vb-v)/(v-vs))-(p-6*deltaE/deltaV*\
                 (v-vs)/deltaV)/T
 
-        volumeUnitCell=Numericalmethods().newton(fun, 1.1*vs, 10e-9, 10e-32)
+        volumeUnitCell=Numericalmethods().newton(fun, (vb+vs)/2, 10e-9, 10e-32)
         meanFieldVolume=volumeUnitCell*math.pow(l,3)
 
         x2=x
@@ -581,11 +595,25 @@ class LatticeHandler:
         plt.ylabel("V/Jm^3")
         plt.show()              
        
-    #Method that shows the evolution of the volume as the temperature increases
+    #Method that shows the evolution of the volume as the temperature increases and compares it to the theoretical value
     def volEvoTemps(self, iniT, finT, tempIncrement):
         Volumes=[]
         error=[]
         temps=[]
+        l=0 #Lattice length
+        n=0 #Montecarlo steps
+        vb=0    #V+
+        vs=0    #V-
+        fvb=0   #Free volume of V+ state
+        fvs=0   #Free volume of V- state
+        eb=0    #E++
+        es=0    #E+- and E--
+        p=0 #Pressure
+        meanSteps=0 #Steps taken between measurements
+        lambdaVol=0 #Lambda
+        deltaV=0    #Delta volume
+        deltaE=0    #Delta energy
+
         #File to write simulation mean volume values
         writeFileName="Volume_Temperature"
         fw=open(writeFileName, "w")
@@ -644,24 +672,30 @@ class LatticeHandler:
         fw.write("dV="+str(deltaV)+"\n")
         fw.write("dE="+str(deltaE)+"\n")
         fw.write("Lambda="+str(lambdaVol)+"\n")
-        
+
         #Calculating theoretical values
-        VTheory=[]
-        TTheory=[]
-        for T in range(iniT, finT):
-            #Function to calculate the volume given by the mean field theory
-            def fun(v):
-                return Constant().K()/deltaV*math.log(lambdaVol*(vb-v)/(v-vs))-(p-6*deltaE/deltaV*\
-                    (v-vs)/deltaV)/T
-            #Calculating volume of the cell using Newton's method
-            volumeUnitCell=Numericalmethods().newton(fun, (vb+vs)/2, 10e-7, 10e-32)
-            meanFieldVolume=volumeUnitCell*math.pow(l,3)
-            VTheory.append(meanFieldVolume)
-            TTheory.append(T)
+        #Array of volumes
+        v=np.linspace(2.1e-5, 2.40e-5, num=1000)
+        
+        #Performing unit change
+        vs=vs*6.022e23   
+        deltaV=deltaV*6.022e23    
+        deltaE=deltaE*6.022e23    
+
+        #Array of temperatures
+        T=[]
+        for volume in v:
+            T.append((p-6*deltaE/deltaV*(volume-vs)/deltaV)/8.31*deltaV/math.log(lambdaVol*(vs+deltaV-volume)/(volume-vs)))
+
+        #Turning to cubic meters
+        v=v/6.022e23
+        #Volume of the whole lattice
+        v=np.multiply(v,50*50*50)
+
 
         #Plotting results
         plt.errorbar(temps,Volumes,error,marker='o', linewidth=2.0, label='Sim')
-        plt.plot(TTheory, VTheory, linewidth=2.0, linestyle='dashed', label='Theory')
+        plt.plot(T, v, linewidth=2.0, linestyle='dashed', label='Theory')
         plt.legend()
         plt.title("Volume-Temperature", fontsize=14)
         plt.xlabel("T/K")
@@ -881,6 +915,19 @@ class LatticeHandler:
         Energies=[]
         error=[]
         temps=[]
+        l=0 #Lattice length
+        n=0 #Montecarlo steps
+        vb=0    #V+
+        vs=0    #V-
+        fvb=0   #Free volume of V+ state
+        fvs=0   #Free volume of V- state
+        eb=0    #E++
+        es=0    #E+- and E--
+        p=0 #Pressure
+        meanSteps=0 #Steps taken between measurements
+        lambdaVol=0 #Lambda
+        deltaV=0    #Delta volume
+        deltaE=0    #Delta energy
         #File to write simulation mean energy values
         writeFileName="Energy_Temperature"
         fw=open(writeFileName, "w")
@@ -941,24 +988,37 @@ class LatticeHandler:
         fw.write("dE="+str(deltaE)+"\n")
         fw.write("Lambda="+str(lambdaVol)+"\n")
 
+        
         #Calculating theoretical values
-        ETheory=[]
-        TTheory=[]
-        for T in range(iniT, finT):
-            #Function to calculate the volume given by the mean field theory
-            def fun(v):
-                return Constant().K()/deltaV*math.log(lambdaVol*(vb-v)/(v-vs))-(p-6*deltaE/deltaV*\
-                    (v-vs)/deltaV)/T
-            #Calculating energy of the cell using Newton's method
-            volumeUnitCell=Numericalmethods().newton(fun, (vb+vs)/2, 10e-7, 10e-32)
-            energyUnitCell=-3*deltaE*math.pow((volumeUnitCell-vs)/deltaV,2)
-            meanFieldEnergy=energyUnitCell*math.pow(l,3)
-            ETheory.append(meanFieldEnergy)
-            TTheory.append(T)
+        #Array of volumes
+        v=np.linspace(2.1e-5, 2.40e-5, num=1000)
+        
+        #Performing unit change
+        vs=vs*6.022e23   
+        deltaV=deltaV*6.022e23  
+        deltaE=deltaE*6.022e23    
 
+        #Array of temperatures
+        T=[]
+        for volume in v:
+            T.append((p-6*deltaE/deltaV*(volume-vs)/deltaV)/8.31*deltaV/math.log(lambdaVol*(vs+deltaV-volume)/(volume-vs)))
+        
+
+        #Performing unit change
+        vs=vs/6.022e23
+        v=v/6.022e23   
+        deltaV=deltaV/6.022e23  
+        deltaE=deltaE/6.022e23    
+
+        #Energy per unit cell
+        energyUnitCell=np.multiply(-3*deltaE, np.power((v-vs)/deltaV,2))
+        #Energy of the whole lattice
+        meanFieldEnergy=np.multiply(energyUnitCell, math.pow(l,3))
+       
+        
         #Plotting results
         plt.errorbar(temps,Energies,error, marker='o', linewidth=2.0, label='Sim')
-        plt.plot(TTheory,ETheory,linewidth=2.0, linestyle='dashed', label='Theory')
+        plt.plot(T,meanFieldEnergy,linewidth=2.0, linestyle='dashed', label='Theory')
         plt.legend()
         plt.title("Energy-T", fontsize=14)
         plt.xlabel("T/K")
@@ -1021,6 +1081,31 @@ class LatticeHandler:
         plt.plot(TArray, alpha,linewidth=2.0)
         plt.title(r'$\alpha_P$', fontsize=14)
         plt.show()  
+
+    #Method to plot the neighbor histogram
+    def plotNeighborHist(self, T):
+        fileName="Neighbor_Histogram"
+        #Retrieving data from the file
+        fr=open(fileName, "r")
+        lines=fr.readlines()
+        nline=0 #Number of the line being read
+        #Looking for part of the file containing the data corresponding to the desired temperature
+        for line in lines:
+            if line == ("T="+str(T)+"\n"):  #Comparing read line to expected header line
+                x=[]    #Number of V+ neighbors
+                y=[]    #Number of cells in that situation
+                for i in range(0,7):    
+                    line=lines[nline+i+2].split("\t")   #+2 since there are two lines before the data
+                    line=line[1].replace("\n", "")
+                    x.append(i)
+                    y.append(int(line))
+                plt.bar(x, y)
+                plt.title("T="+str(T))
+                plt.show()
+            nline+=1
+
+    
+    
 
 
         
