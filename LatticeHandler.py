@@ -713,7 +713,7 @@ class LatticeHandler:
         fw=open(writeFileName, "w")
         #Header of the file
         fw.write("P/Pa"+"\t"+"V/m^3"+"\n")
-        for P in range(iniP, finP+pressureIncrement, pressureIncrement):
+        for P in range(iniP, finP, pressureIncrement):
             pressures.append(P)
             #Data file corresponding to the needed parameters
             fileName="Measurements_P"+str(P)
@@ -768,10 +768,7 @@ class LatticeHandler:
         fw.write("dE="+str(deltaE)+"\n")
         fw.write("Lambda="+str(lambdaVol)+"\n")
         fw.close()
-        #Showing values on console
-        print("P  "+str(pressures))
-        print("Simulation values")
-        print(Volumes) 
+         
 
         #System parameters
         c=6

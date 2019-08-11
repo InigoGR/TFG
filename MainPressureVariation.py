@@ -22,7 +22,7 @@ initialEq=30000000  #Steps to reach the equilibrium before the simulation
 Eq=8000000  #Steps to reach equilibrium after changing the temperature of the system
 
 inputdata=InputData(50, T, mcSteps, Eq,
-                  3.653271338e-29, 3.321078553e-29, 1, 5, -1.660577881e-21, 0, iniP)    #Creating Inputdata object containing the initial simulation parameters
+    4.151444703e-29, 3.321078553e-29, 1, 5, -1.660577881e-21, 0, iniP)    #Creating Inputdata object containing the initial simulation parameters
 lattice=Lattice(inputdata)  #Creating Lattice object using the simulation parameters contained in the Inputdata object
 
 #Initial equilibrium steps
@@ -31,6 +31,10 @@ for i in range(0, initialEq):
         if math.fmod(i/initialEq*100,1.0)==0:   #Checking progress of the equilibrium steps
             print(str(i/(initialEq)*100)+"%")
         LatticeHandler().changeVol(lattice, lattice.getInputData()) #Attempting to change state of one cell
+
+#Removing histogram data file to create a new one
+if os.path.isfile("Neighbor_Histogram"):
+    os.remove("Neighbor_Histogram")
 
 #Repeating simulation for the specified temperatures
 for P in range(iniP, finP+pressureIncrement, pressureIncrement):
@@ -44,10 +48,11 @@ for P in range(iniP, finP+pressureIncrement, pressureIncrement):
         if math.fmod(i/Eq*100,1.0)==0:  #Checking progress of the equilibrium steps
             print(str(i/(Eq)*100)+"%")
         LatticeHandler().changeVol(lattice, lattice.getInputData()) #Attempting to change state of one cell
-
+    lattice.resetHistogram()
     #Getting measurements of the evolution of volume, intermolecular energy and enthalpy
     measurements=LatticeHandler().getSystemEvolution(lattice, lattice.getInputData(), meanSteps)
     #Renaming data files 
     newFileName="Measurements_P"+str(P)
     oldFileName="Measurements_T"+str(T)
     os.rename(oldFileName, newFileName)
+    lattice.saveHistogram() #Saving neighbor histogram
