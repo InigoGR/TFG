@@ -17,18 +17,33 @@ meanSteps=100
 valuesForMean=100
 #Simulation temperatures
 iniT=200    #Initial temperature
-finT=300    #Final temperature  
+finT=300   #Final temperature  
 tempIncrement=10    #Increment of temperature in each simulation
 #simulation steps
 mcSteps=10000000    #MonteCarlo steps during measurement phase 
 initialEq=30000000  #Steps to reach the equilibrium before the simulation
 Eq=10000000 #Steps to reach equilibrium after changing the temperature of the system
-#Pressure
-P=1e5
+#Pressure (S.I.)
+P=5e7   
+#Free volumes (Random units)
+fbv=0.2 #Free volume of + state
+fsv=1 #Free volume of - state
+#Volumes (S.I)
+Vb=4.151444703e-29  #V+
+Vs=3.321078553e-29  #V-
+#Energies   (S.I.)
+Eb=-1.660577881e-21 #E+
+Es=0    #E-
+#Lattice length (Unit cells)
+l=50
 
 
-inputdata=InputData(50, iniT, mcSteps, Eq,
-                  4.151444703e-29, 3.321078553e-29, 1, 5, -1.660577881e-21, 0, P)   #Creating Inputdata object containing the initial simulation parameters
+#Removing probability data file to create a new one
+if os.path.isfile("probabilities"):
+    os.remove("probabilities")
+
+inputdata=InputData(l, iniT, mcSteps, Eq,
+                  Vb, Vs, fbv, fsv, Eb, Es, P)   #Creating Inputdata object containing the initial simulation parameters
 lattice=Lattice(inputdata)  #Creating Lattice object using the simulation parameters contained in the Inputdata object
 
 #Initial equilibrium steps

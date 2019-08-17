@@ -94,6 +94,9 @@ class LatticeHandler:
         #Opening file and writting header
         fileName="Measurements_T"+str(inputData.getT())
         fw=open(fileName, "w")
+        #Opening file to store probabilities
+        fileName="probabilities"
+        fw2=open(fileName, "a")
         #Writting lattice size
         line_new="Lattice length="+str(inputData.getL())
         fw.write(line_new+"\n")
@@ -170,6 +173,12 @@ class LatticeHandler:
             counter+=1
 
         fw.close()  #Closing file
+        fw2.write("Probabilities for T="+str(inputData.getT())+"\n")
+        fw2.write("+ to -"+"\n")
+        fw2.write(str(lattice.probArrayPlus)+"\n")
+        fw2.write("- to +"+"\n")
+        fw2.write(str(lattice.probArrayMinus)+"\n"+"\n")
+        fw2.close()
         return [volumeValues, energyValues, enthalpyValues]
     
     #Method to calculate the mean thermal expansivity for a given temperature from the data files
@@ -533,6 +542,7 @@ class LatticeHandler:
         line=lines[11].split("=")
         meanSteps=float(line[1])
         lambdaVol=fvb/fvs
+        #Calculating deltaE and deltaV
         deltaV=vb-vs
         deltaE=es-eb
         #Number of data sets
@@ -587,11 +597,11 @@ class LatticeHandler:
         y2=[]
         for o in range(0, nDataSets):
             y2.append(meanFieldVolume) 
-        plt.errorbar(x,y,error, marker='o')
-        plt.plot(x2,y2,linewidth=2.0)
-        plt.title("Volume-T", fontsize=14)
+        plt.errorbar(x,y,error)
+        plt.plot(x2,y2,linewidth=2.0, linestyle='dashed')
+        plt.title("Volume-Time", fontsize=14)
         plt.xscale('log')
-        plt.xlabel("T/K")
+        plt.xlabel("t/Steps")
         plt.ylabel("V/Jm^3")
         plt.show()              
        
@@ -675,7 +685,7 @@ class LatticeHandler:
 
         #Calculating theoretical values
         #Array of volumes
-        v=np.linspace(2.1e-5, 2.40e-5, num=1000)
+        v=np.linspace(2.09e-5, 2.41e-5, num=1000)
         
         #Performing unit change
         vs=vs*6.022e23   
@@ -896,11 +906,11 @@ class LatticeHandler:
         y2=[]
         for o in range(0, nDataSets):
             y2.append(meanFieldEnergy) 
-        plt.errorbar(x,y,error, marker='o', label='Sim')
+        plt.errorbar(x,y,error, label='Sim')
         plt.plot(x2,y2,linewidth=2.0, linestyle='dashed', label='Theory')
-        plt.title("Energy", fontsize=14)
+        plt.title("Energy-Time", fontsize=14)
         plt.xscale('log')
-        plt.xlabel("T/K")
+        plt.xlabel("t/Steps")
         plt.ylabel("E/J")
         plt.legend()
         plt.show()
@@ -988,7 +998,7 @@ class LatticeHandler:
         
         #Calculating theoretical values
         #Array of volumes
-        v=np.linspace(2.1e-5, 2.40e-5, num=1000)
+        v=np.linspace(2.09e-5, 2.41e-5, num=1000)
         
         #Performing unit change
         vs=vs*6.022e23   
@@ -1017,7 +1027,7 @@ class LatticeHandler:
         plt.errorbar(temps,Energies,error, marker='o', linewidth=2.0, label='Sim')
         plt.plot(T,meanFieldEnergy,linewidth=2.0, linestyle='dashed', label='Theory')
         plt.legend()
-        plt.title("Energy-T", fontsize=14)
+        plt.title("Energy-Temperature", fontsize=14)
         plt.xlabel("T/K")
         plt.ylabel("E/J")
         plt.show()
@@ -1061,7 +1071,7 @@ class LatticeHandler:
                 return Constant().K()/deltaV*math.log(lambdaVol*(v0+deltaV-v)/(v-v0))-(p-6*\
                     deltaE/deltaV*(v-v0)/deltaV)/T
 
-            volumeUnitCell=Numericalmethods().newton(fun, 1.1*v0, 10e-9, 10e-34)
+            volumeUnitCell=Numericalmethods().newton(fun, (v0+deltaV)/2, 10e-7, 10e-37)
             return volumeUnitCell
         
         #Calculating 1/V*(dv/dT) at cte pressure for all temperatures

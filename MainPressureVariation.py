@@ -6,8 +6,7 @@ from Lattice import *
 import numpy as np
 import os
 
-#Temperature
-T=250
+
 #Number of steps to get record system state
 meanSteps=100
 #Number of measurements to do the mean
@@ -20,9 +19,23 @@ pressureIncrement=int(5e7)  #Increment of pressure in each simulation
 mcSteps=10000000        #MonteCarlo steps during measurement phase 
 initialEq=30000000  #Steps to reach the equilibrium before the simulation
 Eq=8000000  #Steps to reach equilibrium after changing the temperature of the system
+#Temperature (S.i.)
+T=250  
+#Free volumes (Random units)
+fbv=0.2 #Free volume of + state
+fsv=1.0 #Free volume of - state
+#Volumes (S.I)
+Vb=4.151444703e-29  #V+
+Vs=3.321078553e-29  #V-
+#Energies   (S.I.)
+Eb=-1.660577881e-21 #E+
+Es=0    #E-
+#Lattice length (Unit cells)
+l=50
+
 
 inputdata=InputData(50, T, mcSteps, Eq,
-    4.151444703e-29, 3.321078553e-29, 1, 5, -1.660577881e-21, 0, iniP)    #Creating Inputdata object containing the initial simulation parameters
+    Vb, Vs, fbv, fsv, Eb, Es, iniP)    #Creating Inputdata object containing the initial simulation parameters
 lattice=Lattice(inputdata)  #Creating Lattice object using the simulation parameters contained in the Inputdata object
 
 #Initial equilibrium steps
