@@ -26,6 +26,7 @@ class Lattice:
     nVPlus=0    #Number of cells in the V+ state
     nVMinus=0   #Number of ccells in the V- state
     inputData=0 #Object containing the parameters of the simulation
+    neighborHistogram=[0, 0, 0, 0, 0, 0, 0] #Array to store the statistics of neighbors state
     #Constructor
     def __init__(self, inputData):
         #Assigning inputData object as attribute
@@ -105,26 +106,27 @@ class Lattice:
                         #Calculating the intermolecular energy of neighbors
                         energy=energy+(bigVol*inputData.getEb()+(6-bigVol)*inputData.getEs())
         self.energy=energy/2 #The interaction between molecules was accounted for twice before
-        #Volume difference between V+ and V-
-        vChange=inputData.getVb()-inputData.getVs()
-        #Energy difference in 1 volume change
-        eChange=inputData.getEb()-inputData.getEs()
+
+        #Calculating deltaE and deltaV
+        deltaE=inputData.getEs()-inputData.getEb()
+        deltaV=inputData.getVb()-inputData.getVs()
         #Probabilities for energy change from V+ to V-
-        self.probArrayPlus[0]=math.pow(inputData.getLambda(),-1)*math.exp(-((-inputData.getP()*vChange)/Constant().K()/inputData.getT()))
-        self.probArrayPlus[1]=math.pow(inputData.getLambda(),-1)*math.exp(-((eChange-inputData.getP()*vChange)/Constant().K()/inputData.getT()))
-        self.probArrayPlus[2]=math.pow(inputData.getLambda(),-1)*math.exp(-((2*eChange-inputData.getP()*vChange)/Constant().K()/inputData.getT()))
-        self.probArrayPlus[3]=math.pow(inputData.getLambda(),-1)*math.exp(-((3*eChange-inputData.getP()*vChange)/Constant().K()/inputData.getT()))
-        self.probArrayPlus[4]=math.pow(inputData.getLambda(),-1)*math.exp(-((4*eChange-inputData.getP()*vChange)/Constant().K()/inputData.getT()))
-        self.probArrayPlus[5]=math.pow(inputData.getLambda(),-1)*math.exp(-((5*eChange-inputData.getP()*vChange)/Constant().K()/inputData.getT()))
-        self.probArrayPlus[6]=math.pow(inputData.getLambda(),-1)*math.exp(-((6*eChange-inputData.getP()*vChange)/Constant().K()/inputData.getT()))
+        self.probArrayPlus[0]=math.pow(inputData.getLambda(),-1)*math.exp(-((0*deltaE-inputData.getP()*deltaV)/Constant().K()/inputData.getT()))
+        self.probArrayPlus[1]=math.pow(inputData.getLambda(),-1)*math.exp(-((1*deltaE-inputData.getP()*deltaV)/Constant().K()/inputData.getT()))
+        self.probArrayPlus[2]=math.pow(inputData.getLambda(),-1)*math.exp(-((2*deltaE-inputData.getP()*deltaV)/Constant().K()/inputData.getT()))
+        self.probArrayPlus[3]=math.pow(inputData.getLambda(),-1)*math.exp(-((3*deltaE-inputData.getP()*deltaV)/Constant().K()/inputData.getT()))
+        self.probArrayPlus[4]=math.pow(inputData.getLambda(),-1)*math.exp(-((4*deltaE-inputData.getP()*deltaV)/Constant().K()/inputData.getT()))
+        self.probArrayPlus[5]=math.pow(inputData.getLambda(),-1)*math.exp(-((5*deltaE-inputData.getP()*deltaV)/Constant().K()/inputData.getT()))
+        self.probArrayPlus[6]=math.pow(inputData.getLambda(),-1)*math.exp(-((6*deltaE-inputData.getP()*deltaV)/Constant().K()/inputData.getT()))
         #Probabilities for energy change from V- to V+
-        self.probArrayMinus[0]=math.pow(inputData.getLambda(),1)*math.exp(((-inputData.getP()*vChange)/Constant().K()/inputData.getT()))
-        self.probArrayMinus[1]=math.pow(inputData.getLambda(),1)*math.exp(((eChange-inputData.getP()*vChange)/Constant().K()/inputData.getT()))
-        self.probArrayMinus[2]=math.pow(inputData.getLambda(),1)*math.exp(((2*eChange-inputData.getP()*vChange)/Constant().K()/inputData.getT()))
-        self.probArrayMinus[3]=math.pow(inputData.getLambda(),1)*math.exp(((3*eChange-inputData.getP()*vChange)/Constant().K()/inputData.getT()))
-        self.probArrayMinus[4]=math.pow(inputData.getLambda(),1)*math.exp(((4*eChange-inputData.getP()*vChange)/Constant().K()/inputData.getT()))
-        self.probArrayMinus[5]=math.pow(inputData.getLambda(),1)*math.exp(((5*eChange-inputData.getP()*vChange)/Constant().K()/inputData.getT()))
-        self.probArrayMinus[6]=math.pow(inputData.getLambda(),1)*math.exp(((6*eChange-inputData.getP()*vChange)/Constant().K()/inputData.getT()))
+        self.probArrayMinus[0]=math.pow(inputData.getLambda(),1)*math.exp(((0*deltaE-inputData.getP()*deltaV)/Constant().K()/inputData.getT()))
+        self.probArrayMinus[1]=math.pow(inputData.getLambda(),1)*math.exp(((1*deltaE-inputData.getP()*deltaV)/Constant().K()/inputData.getT()))
+        self.probArrayMinus[2]=math.pow(inputData.getLambda(),1)*math.exp(((2*deltaE-inputData.getP()*deltaV)/Constant().K()/inputData.getT()))
+        self.probArrayMinus[3]=math.pow(inputData.getLambda(),1)*math.exp(((3*deltaE-inputData.getP()*deltaV)/Constant().K()/inputData.getT()))
+        self.probArrayMinus[4]=math.pow(inputData.getLambda(),1)*math.exp(((4*deltaE-inputData.getP()*deltaV)/Constant().K()/inputData.getT()))
+        self.probArrayMinus[5]=math.pow(inputData.getLambda(),1)*math.exp(((5*deltaE-inputData.getP()*deltaV)/Constant().K()/inputData.getT()))
+        self.probArrayMinus[6]=math.pow(inputData.getLambda(),1)*math.exp(((6*deltaE-inputData.getP()*deltaV)/Constant().K()/inputData.getT()))
+    
     #Method to change the volume of a cell
     def changeCellVolume(self, x, y, z):
         self.lattice[x,y,z]=1-self.lattice[x,y,z]
@@ -147,27 +149,41 @@ class Lattice:
         self.inputData.changeT(T)
         self.inputData.changeP(P)
 
-        #Volume difference in 1 cell
-        vChange=self.inputData.getVb()-self.inputData.getVs()
-        #Energy difference in 1 volume change
-        eChange=self.inputData.getEb()-self.inputData.getEs()
+       #Calculating deltaE and deltaV
+        deltaE=self.inputData.getEs()-self.inputData.getEb()
+        deltaV=self.inputData.getVb()-self.inputData.getVs()
         #Probabilities for energy change from V+ to V-
-        self.probArrayPlus[0]=1
-        self.probArrayPlus[1]=math.pow(self.inputData.getLambda(),-1)*math.exp(-((eChange-self.inputData.getP()*vChange)/Constant().K()/self.inputData.getT()))
-        self.probArrayPlus[2]=math.pow(self.inputData.getLambda(),-1)*math.exp(-((2*eChange-self.inputData.getP()*vChange)/Constant().K()/self.inputData.getT()))
-        self.probArrayPlus[3]=math.pow(self.inputData.getLambda(),-1)*math.exp(-((3*eChange-self.inputData.getP()*vChange)/Constant().K()/self.inputData.getT()))
-        self.probArrayPlus[4]=math.pow(self.inputData.getLambda(),-1)*math.exp(-((4*eChange-self.inputData.getP()*vChange)/Constant().K()/self.inputData.getT()))
-        self.probArrayPlus[5]=math.pow(self.inputData.getLambda(),-1)*math.exp(-((5*eChange-self.inputData.getP()*vChange)/Constant().K()/self.inputData.getT()))
-        self.probArrayPlus[6]=math.pow(self.inputData.getLambda(),-1)*math.exp(-((6*eChange-self.inputData.getP()*vChange)/Constant().K()/self.inputData.getT()))
+        self.probArrayPlus[0]=math.pow(self.inputData.getLambda(),-1)*math.exp(-((0*deltaE-self.inputData.getP()*deltaV)/Constant().K()/self.inputData.getT()))
+        self.probArrayPlus[1]=math.pow(self.inputData.getLambda(),-1)*math.exp(-((1*deltaE-self.inputData.getP()*deltaV)/Constant().K()/self.inputData.getT()))
+        self.probArrayPlus[2]=math.pow(self.inputData.getLambda(),-1)*math.exp(-((2*deltaE-self.inputData.getP()*deltaV)/Constant().K()/self.inputData.getT()))
+        self.probArrayPlus[3]=math.pow(self.inputData.getLambda(),-1)*math.exp(-((3*deltaE-self.inputData.getP()*deltaV)/Constant().K()/self.inputData.getT()))
+        self.probArrayPlus[4]=math.pow(self.inputData.getLambda(),-1)*math.exp(-((4*deltaE-self.inputData.getP()*deltaV)/Constant().K()/self.inputData.getT()))
+        self.probArrayPlus[5]=math.pow(self.inputData.getLambda(),-1)*math.exp(-((5*deltaE-self.inputData.getP()*deltaV)/Constant().K()/self.inputData.getT()))
+        self.probArrayPlus[6]=math.pow(self.inputData.getLambda(),-1)*math.exp(-((6*deltaE-self.inputData.getP()*deltaV)/Constant().K()/self.inputData.getT()))
         #Probabilities for energy change from V- to V+
-        self.probArrayMinus[0]=1
-        self.probArrayMinus[1]=math.pow(self.inputData.getLambda(),1)*math.exp(((eChange-self.inputData.getP()*vChange)/Constant().K()/self.inputData.getT()))
-        self.probArrayMinus[2]=math.pow(self.inputData.getLambda(),1)*math.exp(((2*eChange-self.inputData.getP()*vChange)/Constant().K()/self.inputData.getT()))
-        self.probArrayMinus[3]=math.pow(self.inputData.getLambda(),1)*math.exp(((3*eChange-self.inputData.getP()*vChange)/Constant().K()/self.inputData.getT()))
-        self.probArrayMinus[4]=math.pow(self.inputData.getLambda(),1)*math.exp(((4*eChange-self.inputData.getP()*vChange)/Constant().K()/self.inputData.getT()))
-        self.probArrayMinus[5]=math.pow(self.inputData.getLambda(),1)*math.exp(((5*eChange-self.inputData.getP()*vChange)/Constant().K()/self.inputData.getT()))
-        self.probArrayMinus[6]=math.pow(self.inputData.getLambda(),1)*math.exp(((6*eChange-self.inputData.getP()*vChange)/Constant().K()/self.inputData.getT()))
-
+        self.probArrayMinus[0]=math.pow(self.inputData.getLambda(),1)*math.exp(((0*deltaE-self.inputData.getP()*deltaV)/Constant().K()/self.inputData.getT()))
+        self.probArrayMinus[1]=math.pow(self.inputData.getLambda(),1)*math.exp(((1*deltaE-self.inputData.getP()*deltaV)/Constant().K()/self.inputData.getT()))
+        self.probArrayMinus[2]=math.pow(self.inputData.getLambda(),1)*math.exp(((2*deltaE-self.inputData.getP()*deltaV)/Constant().K()/self.inputData.getT()))
+        self.probArrayMinus[3]=math.pow(self.inputData.getLambda(),1)*math.exp(((3*deltaE-self.inputData.getP()*deltaV)/Constant().K()/self.inputData.getT()))
+        self.probArrayMinus[4]=math.pow(self.inputData.getLambda(),1)*math.exp(((4*deltaE-self.inputData.getP()*deltaV)/Constant().K()/self.inputData.getT()))
+        self.probArrayMinus[5]=math.pow(self.inputData.getLambda(),1)*math.exp(((5*deltaE-self.inputData.getP()*deltaV)/Constant().K()/self.inputData.getT()))
+        self.probArrayMinus[6]=math.pow(self.inputData.getLambda(),1)*math.exp(((6*deltaE-self.inputData.getP()*deltaV)/Constant().K()/self.inputData.getT()))
+    #Method to change the histogram array components, add +1 to the n component
+    def changeHistogram(self, n):
+        self.neighborHistogram[n]+=1
+    #Method to reset the histogram values to 0
+    def resetHistogram(self):
+        self.neighborHistogram=[0, 0, 0, 0, 0, 0, 0]
+    #Method to save the histogram values
+    def saveHistogram(self):
+         #File to write simulation mean energy values
+        writeFileName="Neighbor_Histogram"
+        fw=open(writeFileName, "a")
+        #Header of the file
+        fw.write("T="+str(self.inputData.getT())+"\n")
+        fw.write("nV+neighbors"+"\t"+"nCells"+"\n")
+        for i in range(0,7):
+            fw.write(str(i)+"\t"+str(self.neighborHistogram[i])+"\n")
     #Method to get the simulation parameters
     def getInputData(self):
         return self.inputData
@@ -183,9 +199,9 @@ class Lattice:
     #Method to get the energy
     def getEnergy(self):
         return self.energy
-    #Method to get the number of big cells
+    #Method to get the number of V+ cells
     def getNVPlus(self):
         return self.nVPlus
-    #Method to get the number of small cells
+    #Method to get the number of V- cells
     def getNVMinus(self):
         return self.nVMinus
