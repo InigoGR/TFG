@@ -5,7 +5,7 @@ from ResultsList import *
 valuesForMean=10000
 
 #Simulation temperatures
-iniT=200    #Initial temperature
+iniT=30    #Initial temperature
 finT=300   #Final temperature  
 tempIncrement=10    #Increment of temperature in each simulation
 #Pressure (S.I.)

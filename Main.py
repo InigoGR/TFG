@@ -16,7 +16,7 @@ meanSteps=100
 #Number of measurements to do the mean
 valuesForMean=100
 #Simulation temperatures
-iniT=200    #Initial temperature
+iniT=190    #Initial temperature
 finT=300   #Final temperature  
 tempIncrement=10    #Increment of temperature in each simulation
 #simulation steps
@@ -24,10 +24,10 @@ mcSteps=10000000    #MonteCarlo steps during measurement phase
 initialEq=30000000  #Steps to reach the equilibrium before the simulation
 Eq=10000000 #Steps to reach equilibrium after changing the temperature of the system
 #Pressure (S.I.)
-P=5e7   
+P=1e5   
 #Free volumes (Random units)
 fbv=0.2 #Free volume of + state
-fsv=1 #Free volume of - state
+fsv=1.0 #Free volume of - state
 #Volumes (S.I)
 Vb=4.151444703e-29  #V+
 Vs=3.321078553e-29  #V-

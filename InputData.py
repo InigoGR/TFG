@@ -13,7 +13,7 @@ class InputData:
     #Parameters: lattice size, temperature, montecarlo steps, equlibrium steps, big cell volume
     #            small cell volume, big free volume, small free volume, big energy, small energy, pressure
     def __init__( self, l=4, t=200, n=1000000, nEquil=1000,
-                  vb=2, vs=1, fbv=1, fsv=0.2, eb=1, es=2, p=1 ) :
+                  vb=2, vs=1, fbv=1.0, fsv=0.2, eb=1, es=2, p=1 ) :
         self.length=l   #Length of the lattice in cells
         self.temperature=t  #Temperature of the simulation
         self.steps=n    #MonteCarlo steps for the measurement phase

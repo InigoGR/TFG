@@ -54,7 +54,7 @@ class LatticeHandler:
         #Getting intermolecular energy change
         #Case initialV=V-
         if tempLattice[x,y,z]==0:
-            if random.uniform(0,1)<(lattice.getNVMinus()/(lattice.getNVPlus()+1)*lattice.probArrayMinus[n]):    #The change of state of the cell is accepted
+            if random.uniform(0,1)<lattice.probArrayMinus[n]:    #The change of state of the cell is accepted
             
                 intEnergyVar=n*(inputData.getEb()-inputData.getEs())    #Calculating variation of the energy
                 volumeChange=inputData.getVb()-inputData.getVs()    #Calculating variation of the volume   
@@ -70,7 +70,7 @@ class LatticeHandler:
         #Case initialV=V+
         else:      
         #Checking if the change is accepted
-            if random.uniform(0,1)<(lattice.getNVPlus()/(lattice.getNVMinus()+1)*lattice.probArrayPlus[n]): #The change of state of the cell is accepted
+            if random.uniform(0,1)<lattice.probArrayPlus[n]: #The change of state of the cell is accepted
                 
                 intEnergyVar=n*(inputData.getEs()-inputData.getEb())    #Calculating variation of the energy
                 volumeChange=inputData.getVs()-inputData.getVb()    #Calculating variation of the volume
@@ -218,7 +218,7 @@ class LatticeHandler:
                 enthalpySet.append(float(values[2]))
                 #Changing line
                 nLine+=1
-            #Introducing data set into data array
+            #Introducing data set into data array in molar units
             volumeSets.append(volumeSet)
             enthalpySets.append(enthalpySet)
         
@@ -389,9 +389,9 @@ class LatticeHandler:
             #Residual heat capacity
             resHeatCap=1/Constant().K()/math.pow(T,2)*(meanProductE-\
             meanEnergy*meanEnthalpy)+1/Constant().K()/math.pow(T,2)*(meanProductV-\
-            meanVolume*meanEnthalpy)-math.pow(l,3)*Constant().K()
-
-            heatCapArray.append(resHeatCap+5/2*math.pow(l,3)*Constant().K())
+            meanVolume*meanEnthalpy)
+            #Turning to molar units
+            heatCapArray.append(resHeatCap/math.pow(l,3)*6.022e23+5/2*6.022e23*Constant().K())
         heatCap=sum(heatCapArray)/nDataSets
         #Calculating deviation
         residue=0
@@ -491,7 +491,7 @@ class LatticeHandler:
         isentCompressArray=[]
         #Calculating values of the isentropic compressibility
         for i in range(0, len(meanVolumes)):
-            isentCompress=beta_t[i]-T*meanVolumes[i]/math.pow(l,3)*\
+            isentCompress=beta_t[i]-T*meanVolumes[i]*\
                 math.pow(alpha_p[i],2)/c_p[i]
             isentCompressArray.append(isentCompress)
         isentropicCompressibility=sum(isentCompressArray)/len(isentCompressArray)
@@ -610,23 +610,47 @@ class LatticeHandler:
         Volumes=[]
         error=[]
         temps=[]
-        l=0 #Lattice length
-        n=0 #Montecarlo steps
-        vb=0    #V+
-        vs=0    #V-
-        fvb=0   #Free volume of V+ state
-        fvs=0   #Free volume of V- state
-        eb=0    #E++
-        es=0    #E+- and E--
-        p=0 #Pressure
-        meanSteps=0 #Steps taken between measurements
-        lambdaVol=0 #Lambda
-        deltaV=0    #Delta volume
-        deltaE=0    #Delta energy
-
-        #File to write simulation mean volume values
+        #Data file corresponding to the needed parameters
+        fileName="Measurements_T"+str(iniT)
+        #Retrieving data from the file
+        fr=open(fileName, "r")
+        #Getting file lines
+        lines=fr.readlines()
+        #Reading inputData parameters
+        line=lines[0].split("=")
+        l=float(line[1])
+        line=lines[2].split("=")
+        n=float(line[1])
+        line=lines[4].split("=")
+        vb=float(line[1])
+        line=lines[5].split("=")
+        vs=float(line[1])
+        line=lines[6].split("=")
+        fvb=float(line[1])
+        line=lines[7].split("=")
+        fvs=float(line[1])
+        line=lines[8].split("=")
+        eb=float(line[1])
+        line=lines[9].split("=")
+        es=float(line[1])
+        line=lines[10].split("=")
+        p=float(line[1])
+        line=lines[11].split("=")
+        meanSteps=float(line[1])
+        lambdaVol=fvb/fvs
+        deltaV=vb-vs
+        deltaE=es-eb
+        #Number of measurements
+        nMeasurements=int(n/meanSteps)
+        #File to write simulation mean energy values
         writeFileName="Volume_Temperature"
         fw=open(writeFileName, "w")
+        #Header of the file
+        fw.write("Pressure="+str(p)+" Pa"+"\n")
+        fw.write("L="+str(l)+"\n")
+        fw.write("dV="+str(deltaV*6.022e23)+" m^3/mol"+"\n")
+        fw.write("dE="+str(deltaE*6.022e23)+" J/mol"+"\n")
+        fw.write("Lambda="+str(lambdaVol)+"\n")
         #Header of the file
         fw.write("T/K"+"\t"+"V/m^3"+"\n")
         for T in range(iniT, finT+tempIncrement, tempIncrement):
@@ -672,20 +696,16 @@ class LatticeHandler:
                 volumeSet.append(float(values[0]))
                 #Changing line
                 nLine+=1
-                #Introducing data set into data array
+            #Changing to molar units
+            volumeSet=np.multiply(volumeSet, 6.022e23/math.pow(l,3))
+            #Introducing data set into data array
             Volumes.append(statistics.mean(volumeSet))
             error.append(statistics.stdev(volumeSet))
             fw.write(str(T)+"\t"+str(statistics.mean(volumeSet))+"  +-  "+str(statistics.stdev(volumeSet))+"\n")
-        fw.write("Pressure="+str(p)+"\n")
-        fw.write("Temperature="+str(T)+"\n")
-        fw.write("L="+str(l)+"\n")
-        fw.write("dV="+str(deltaV)+"\n")
-        fw.write("dE="+str(deltaE)+"\n")
-        fw.write("Lambda="+str(lambdaVol)+"\n")
 
         #Calculating theoretical values
         #Array of volumes
-        v=np.linspace(2.09e-5, 2.41e-5, num=1000)
+        v=np.linspace(2.11e-5, 2.4999999e-5, num=10000)
         
         #Performing unit change
         vs=vs*6.022e23   
@@ -697,10 +717,6 @@ class LatticeHandler:
         for volume in v:
             T.append((p-6*deltaE/deltaV*(volume-vs)/deltaV)/8.31*deltaV/math.log(lambdaVol*(vs+deltaV-volume)/(volume-vs)))
 
-        #Turning to cubic meters
-        v=v/6.022e23
-        #Volume of the whole lattice
-        v=np.multiply(v,50*50*50)
 
 
         #Plotting results
@@ -709,7 +725,7 @@ class LatticeHandler:
         plt.legend()
         plt.title("Volume-Temperature", fontsize=14)
         plt.xlabel("T/K")
-        plt.ylabel("V/m^3")
+        plt.ylabel(r"$V\ /\ m^3\ mol^-1$")
         plt.show() 
 
 
@@ -721,8 +737,49 @@ class LatticeHandler:
         #File to write simulation mean volume values
         writeFileName="Volume_Pressure"
         fw=open(writeFileName, "w")
+        #Data file corresponding to the needed parameters
+        fileName="Measurements_P"+str(iniP)
+        #Retrieving data from the file
+        fr=open(fileName, "r")
+        #Getting file lines
+        lines=fr.readlines()
+        #Reading inputData parameters
+        line=lines[0].split("=")
+        l=float(line[1])
+        line=lines[2].split("=")
+        n=float(line[1])
+        line=lines[4].split("=")
+        vb=float(line[1])
+        line=lines[5].split("=")
+        vs=float(line[1])
+        line=lines[6].split("=")
+        fvb=float(line[1])
+        line=lines[7].split("=")
+        fvs=float(line[1])
+        line=lines[8].split("=")
+        eb=float(line[1])
+        line=lines[9].split("=")
+        es=float(line[1])
+        line=lines[1].split("=")
+        T=float(line[1])
+        line=lines[11].split("=")
+        meanSteps=float(line[1])
+        lambdaVol=fvb/fvs
+        deltaV=vb-vs
+        deltaE=es-eb
         #Header of the file
-        fw.write("P/Pa"+"\t"+"V/m^3"+"\n")
+        #Number of measurements
+        nMeasurements=int(n/meanSteps)
+        #File to write simulation mean energy values
+        writeFileName="Pressure_Volume"
+        fw=open(writeFileName, "w")
+        #Header of the file
+        fw.write("Temperature="+str(T)+" K"+"\n")
+        fw.write("L="+str(l)+"\n")
+        fw.write("dV="+str(deltaV*6.022e23)+" m^3/mol"+"\n")
+        fw.write("dE="+str(deltaE*6.022e23)+" J/mol"+"\n")
+        fw.write("Lambda="+str(lambdaVol)+"\n")
+        fw.write("P/Pa"+"\t"+"V/m^3 mol^-1"+"\n")
         for P in range(iniP, finP, pressureIncrement):
             pressures.append(P)
             #Data file corresponding to the needed parameters
@@ -768,16 +825,12 @@ class LatticeHandler:
                 volumeSet.append(float(values[0]))
                 #Changing line
                 nLine+=1
-                #Introducing data set into data array
+            #Changing to molar units
+            volumeSet=np.multiply(volumeSet, 6.022e23/math.pow(l,3))
+            #Introducing data set into data array
             Volumes.append(statistics.mean(volumeSet))
             error.append(statistics.stdev(volumeSet))
             fw.write(str(P)+"\t"+str(statistics.mean(volumeSet))+"  +-  "+str(statistics.stdev(volumeSet))+"\n")
-        fw.write("Temperature="+str(T)+"\n")
-        fw.write("L="+str(l)+"\n")
-        fw.write("dV="+str(deltaV)+"\n")
-        fw.write("dE="+str(deltaE)+"\n")
-        fw.write("Lambda="+str(lambdaVol)+"\n")
-        fw.close()
          
 
         #System parameters
@@ -801,17 +854,12 @@ class LatticeHandler:
             p3.append(p1[k]+p2[k])
             k+=1
 
-        #Turning to cubic meters
-        v=v/6.022e23
-        #Volume of the whole lattice
-        v=np.multiply(v,50*50*50)
-
         #Plotting results
         plt.errorbar(pressures,Volumes,error, marker='o', linewidth=2.0, label='sim')
         plt.plot(p3,v, linestyle='dashed', label='theory')
         plt.title("Volume-Pressure", fontsize=14)
         plt.xlabel("P/Pa")
-        plt.ylabel("V/m^3")
+        plt.ylabel(r"$V\ /\ m^3\ mol^-1$")
         plt.legend()
         plt.show() 
 
@@ -922,24 +970,48 @@ class LatticeHandler:
         Energies=[]
         error=[]
         temps=[]
-        l=0 #Lattice length
-        n=0 #Montecarlo steps
-        vb=0    #V+
-        vs=0    #V-
-        fvb=0   #Free volume of V+ state
-        fvs=0   #Free volume of V- state
-        eb=0    #E++
-        es=0    #E+- and E--
-        p=0 #Pressure
-        meanSteps=0 #Steps taken between measurements
-        lambdaVol=0 #Lambda
-        deltaV=0    #Delta volume
-        deltaE=0    #Delta energy
+        #Data file corresponding to the needed parameters
+        fileName="Measurements_T"+str(iniT)
+        #Retrieving data from the file
+        fr=open(fileName, "r")
+        #Getting file lines
+        lines=fr.readlines()
+        #Reading inputData parameters
+        line=lines[0].split("=")
+        l=float(line[1])
+        line=lines[2].split("=")
+        n=float(line[1])
+        line=lines[4].split("=")
+        vb=float(line[1])
+        line=lines[5].split("=")
+        vs=float(line[1])
+        line=lines[6].split("=")
+        fvb=float(line[1])
+        line=lines[7].split("=")
+        fvs=float(line[1])
+        line=lines[8].split("=")
+        eb=float(line[1])
+        line=lines[9].split("=")
+        es=float(line[1])
+        line=lines[10].split("=")
+        p=float(line[1])
+        line=lines[11].split("=")
+        meanSteps=float(line[1])
+        lambdaVol=fvb/fvs
+        deltaV=vb-vs
+        deltaE=es-eb
+        #Number of measurements
+        nMeasurements=int(n/meanSteps)
         #File to write simulation mean energy values
         writeFileName="Energy_Temperature"
         fw=open(writeFileName, "w")
         #Header of the file
-        fw.write("T/K"+"\t"+"Energy/J"+"\n")
+        fw.write("Pressure="+str(p)+" Pa"+"\n")
+        fw.write("L="+str(l)+"\n")
+        fw.write("dV="+str(deltaV*6.022e23)+" m^3/mol"+"\n")
+        fw.write("dE="+str(deltaE*6.022e23)+" J/mol"+"\n")
+        fw.write("Lambda="+str(lambdaVol)+"\n")
+        fw.write("T/K"+"\t"+"Energy/J mol^-1"+"\n")
         #calculating mean energy for every simulation temperature
         for T in range(iniT, finT+tempIncrement, tempIncrement):
             temps.append(T)
@@ -984,21 +1056,19 @@ class LatticeHandler:
                 energySet.append(float(values[1]))
                 #Changing line
                 nLine+=1
+            #Turning to molar units
+            energySet=np.multiply(energySet, 6.022e23/math.pow(l,3))
             #Introducing data set mean into data array
             Energies.append(statistics.mean(energySet))
             error.append(statistics.stdev(energySet))
             #Printing mean energies in file
             fw.write(str(T)+"\t"+str(statistics.mean(energySet))+"  +-  "+str(statistics.stdev(energySet))+"\n")
-        fw.write("Pressure="+str(p)+"\n")
-        fw.write("L="+str(l)+"\n")
-        fw.write("dV="+str(deltaV)+"\n")
-        fw.write("dE="+str(deltaE)+"\n")
-        fw.write("Lambda="+str(lambdaVol)+"\n")
+        
 
         
         #Calculating theoretical values
         #Array of volumes
-        v=np.linspace(2.09e-5, 2.41e-5, num=1000)
+        v=np.linspace(2.11e-5, 2.4999999e-5, num=10000)
         
         #Performing unit change
         vs=vs*6.022e23   
@@ -1020,7 +1090,7 @@ class LatticeHandler:
         #Energy per unit cell
         energyUnitCell=np.multiply(-3*deltaE, np.power((v-vs)/deltaV,2))
         #Energy of the whole lattice
-        meanFieldEnergy=np.multiply(energyUnitCell, math.pow(l,3))
+        meanFieldEnergy=np.multiply(energyUnitCell, 6.022e23)
        
         
         #Plotting results
@@ -1029,7 +1099,7 @@ class LatticeHandler:
         plt.legend()
         plt.title("Energy-Temperature", fontsize=14)
         plt.xlabel("T/K")
-        plt.ylabel("E/J")
+        plt.ylabel(r"$E\ /\ J\ mol^-1$")
         plt.show()
 
     #Method for calculating theoretically the isothermal compressibility

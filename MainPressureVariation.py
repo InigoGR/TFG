@@ -18,7 +18,7 @@ pressureIncrement=int(5e7)  #Increment of pressure in each simulation
 #simulation steps
 mcSteps=10000000        #MonteCarlo steps during measurement phase 
 initialEq=30000000  #Steps to reach the equilibrium before the simulation
-Eq=8000000  #Steps to reach equilibrium after changing the temperature of the system
+Eq=10000000  #Steps to reach equilibrium after changing the temperature of the system
 #Temperature (S.i.)
 T=250  
 #Free volumes (Random units)
